@@ -18,6 +18,12 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Código generado: el service worker que empaqueta Serwist y el
+      // cliente de Prisma. Ninguno se edita a mano, y sus 86 avisos tapaban
+      // los problemas reales del código propio.
+      "public/sw.js",
+      "public/swe-worker-*.js",
+      "src/generated/**",
     ],
   },
 ];

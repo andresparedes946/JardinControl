@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CambiarPassword } from "@/components/cambiar-password";
 import { requerirSesion } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Mi perfil" };
@@ -55,6 +56,8 @@ export default async function PerfilPage() {
           </dl>
         </CardContent>
       </Card>
+
+      <CambiarPassword />
     </div>
   );
 }
