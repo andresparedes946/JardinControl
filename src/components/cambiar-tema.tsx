@@ -14,7 +14,11 @@ export function CambiarTema() {
   // montar produciría un mismatch de hidratación.
   useEffect(() => setMontado(true), []);
 
-  const esOscuro = resolvedTheme === "dark";
+  // Hasta que monte, el servidor no sabe qué tema resolvió el cliente. Se
+  // renderiza el estado neutro en TODO lo que dependa del tema —ícono y
+  // aria-label— porque basta con que uno de los dos difiera para romper la
+  // hidratación de la rama entera.
+  const esOscuro = montado && resolvedTheme === "dark";
 
   return (
     <Button
@@ -23,11 +27,7 @@ export function CambiarTema() {
       onClick={() => setTheme(esOscuro ? "light" : "dark")}
       aria-label={esOscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
     >
-      {montado && esOscuro ? (
-        <Sun className="size-4" />
-      ) : (
-        <Moon className="size-4" />
-      )}
+      {esOscuro ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
   );
 }

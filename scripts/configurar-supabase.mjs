@@ -48,11 +48,21 @@ if (databaseUrl && !databaseUrl.includes("pgbouncer=true")) {
 if (directUrl && directUrl.includes("6543")) {
   mal("DIRECT_URL apunta al 6543: tiene que ser la directa (5432)");
 }
-if (databaseUrl && databaseUrl.includes("[YOUR-PASSWORD]")) {
-  mal("Falta reemplazar [YOUR-PASSWORD] en DATABASE_URL");
-}
-if (directUrl && directUrl.includes("[YOUR-PASSWORD]")) {
-  mal("Falta reemplazar [YOUR-PASSWORD] en DIRECT_URL");
+// Los corchetes de [YOUR-PASSWORD] son parte del marcador, no de la
+// contraseña. Si quedan, `pg` los lee como un literal IPv6 y se cuelga sin
+// mensaje, así que conviene detectarlo acá antes de intentar conectar.
+for (const [nombre, url] of [
+  ["DATABASE_URL", databaseUrl],
+  ["DIRECT_URL", directUrl],
+]) {
+  if (!url) continue;
+  if (url.includes("[YOUR-PASSWORD]")) {
+    mal(`Falta reemplazar [YOUR-PASSWORD] en ${nombre}`);
+  } else if (/:\[[^\]]*\]@/.test(url)) {
+    mal(
+      `${nombre} tiene la contraseña entre corchetes: sacá el [ y el ], son parte del marcador`,
+    );
+  }
 }
 if (errores === 0) ok("todas presentes y con la forma esperada");
 
