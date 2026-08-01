@@ -47,7 +47,7 @@ const SALAS = [
 
 const ADMIN = {
   nombre: "Sandra",
-  apellido: "",
+  apellido: "Corbalán",
   email: "corbalangiuliana11@gmail.com",
 };
 
@@ -148,7 +148,12 @@ async function main() {
       password: hashAdmin,
       rol: "ADMIN",
     },
-    update: { nombre: ADMIN.nombre, rol: "ADMIN", activo: true },
+    update: {
+      nombre: ADMIN.nombre,
+      apellido: ADMIN.apellido,
+      rol: "ADMIN",
+      activo: true,
+    },
   });
   console.log(`✔ Administradora: ${ADMIN.email}`);
 
