@@ -1,0 +1,337 @@
+// JardinControl — esquema de datos
+// Prisma 7: la URL de la datasource se define en prisma.config.ts (para el CLI)
+// y se pasa por driver adapter en runtime (src/lib/prisma.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+
+enum Rol {
+  ADMIN
+  EMPLEADO
+}
+
+enum Turno {
+  MANANA
+  TARDE
+  DOBLE
+}
+
+enum EstadoEmpleado {
+  ACTIVO
+  INACTIVO
+}
+
+enum EstadoAsistencia {
+  PRESENTE
+  TARDE
+  AUSENTE
+  JUSTIFICADA
+  LICENCIA
+}
+
+enum TipoFichaje {
+  INGRESO
+  EGRESO
+}
+
+/// Todo intento de fichaje se persiste, aceptado o no, para auditoría.
+enum ResultadoFichaje {
+  ACEPTADO
+  RECHAZADO_ROSTRO
+  RECHAZADO_UBICACION
+  RECHAZADO_LIVENESS
+  RECHAZADO_SIN_ENROLAR
+  RECHAZADO_DUPLICADO
+}
+
+enum TipoLicencia {
+  ENFERMEDAD
+  VACACIONES
+  ESTUDIO
+  PERSONAL
+  MATERNIDAD
+  OTRO
+}
+
+enum EstadoLicencia {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+// ─────────────────────── Usuarios y roles ───────────────────────
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nombre    String
+  apellido  String
+  email     String   @unique
+  password  String // hash bcrypt
+  rol       Rol      @default(EMPLEADO)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  empleado           Empleado?
+  auditorias         Auditoria[]
+  licenciasRevisadas Licencia[]  @relation("LicenciaRevisor")
+
+  @@map("usuarios")
+}
+
+model Empleado {
+  id              String         @id @default(cuid())
+  usuarioId       String         @unique @map("usuario_id")
+  dni             String         @unique
+  legajo          String         @unique
+  telefono        String?
+  direccion       String?
+  fechaNacimiento DateTime?      @map("fecha_nacimiento") @db.Date
+  cargo           String
+  turno           Turno
+  salaId          String?        @map("sala_id")
+  fotoUrl         String?        @map("foto_url")
+  /// Valor hora en pesos. La liquidación lo congela al generarse.
+  valorHora       Decimal        @default(0) @map("valor_hora") @db.Decimal(10, 2)
+  estado          EstadoEmpleado @default(ACTIVO)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  usuario       Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  sala          Sala?              @relation(fields: [salaId], references: [id], onDelete: SetNull)
+  descriptores  DescriptorFacial[]
+  asistencias   Asistencia[]
+  fichajes      Fichaje[]
+  licencias     Licencia[]
+  liquidaciones Liquidacion[]
+
+  @@index([salaId])
+  @@index([estado])
+  @@map("empleados")
+}
+
+// ─────────────────────── Biometría ───────────────────────
+
+/// Solo se almacena el vector facial, nunca las fotos del enrolamiento.
+/// Se guardan varios por empleada para tolerar cambios de luz y ángulo.
+model DescriptorFacial {
+  id         String   @id @default(cuid())
+  empleadoId String   @map("empleado_id")
+  /// Embedding producido por @vladmandic/human.
+  descriptor Float[]
+  /// Score de calidad de la captura al momento del enrolamiento (0-1).
+  calidad    Float?
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  empleado Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+
+  @@index([empleadoId, activo])
+  @@map("descriptores_faciales")
+}
+
+// ─────────────────────── Asistencia ───────────────────────
+
+model Asistencia {
+  id                String           @id @default(cuid())
+  empleadoId        String           @map("empleado_id")
+  /// Día calendario en hora local del jardín.
+  fecha             DateTime         @db.Date
+  horaIngreso       DateTime?        @map("hora_ingreso")
+  horaSalida        DateTime?        @map("hora_salida")
+  minutosTrabajados Int?             @map("minutos_trabajados")
+  minutosTarde      Int              @default(0) @map("minutos_tarde")
+  estado            EstadoAsistencia @default(PRESENTE)
+  /// Marca las filas creadas o editadas a mano por el admin.
+  ajustadaManual    Boolean          @default(false) @map("ajustada_manual")
+  observaciones     String?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  empleado Empleado  @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  fichajes Fichaje[]
+
+  @@unique([empleadoId, fecha])
+  @@index([fecha])
+  @@map("asistencias")
+}
+
+/// Evento crudo de fichaje. Es la fuente de verdad auditable: guarda la
+/// geolocalización enviada y los scores que produjo el modelo, incluso
+/// cuando el intento fue rechazado.
+model Fichaje {
+  id              String           @id @default(cuid())
+  empleadoId      String           @map("empleado_id")
+  asistenciaId    String?          @map("asistencia_id")
+  tipo            TipoFichaje
+  resultado       ResultadoFichaje
+  timestamp       DateTime         @default(now())
+  lat             Float?
+  lng             Float?
+  /// Precisión reportada por el GPS del dispositivo, en metros.
+  precisionMetros Float?           @map("precision_metros")
+  /// Distancia calculada en el servidor entre el dispositivo y el jardín.
+  distanciaMetros Float?           @map("distancia_metros")
+  /// Distancia euclídea al descriptor más cercano (menor = mejor).
+  scoreFacial     Float?           @map("score_facial")
+  scoreLiveness   Float?           @map("score_liveness")
+  scoreAntispoof  Float?           @map("score_antispoof")
+  motivoRechazo   String?          @map("motivo_rechazo")
+  ip              String?
+  userAgent       String?          @map("user_agent")
+
+  empleado   Empleado    @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  asistencia Asistencia? @relation(fields: [asistenciaId], references: [id], onDelete: SetNull)
+
+  @@index([empleadoId, timestamp])
+  @@index([resultado])
+  @@map("fichajes")
+}
+
+// ─────────────────────── Licencias ───────────────────────
+
+model Licencia {
+  id            String         @id @default(cuid())
+  empleadoId    String         @map("empleado_id")
+  tipo          TipoLicencia
+  fechaInicio   DateTime       @map("fecha_inicio") @db.Date
+  fechaFin      DateTime       @map("fecha_fin") @db.Date
+  motivo        String?
+  estado        EstadoLicencia @default(PENDIENTE)
+  revisadaPorId String?        @map("revisada_por_id")
+  revisadaEn    DateTime?      @map("revisada_en")
+  observaciones String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  empleado     Empleado      @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  revisadaPor  Usuario?      @relation("LicenciaRevisor", fields: [revisadaPorId], references: [id], onDelete: SetNull)
+  comprobantes Comprobante[]
+
+  @@index([empleadoId, estado])
+  @@index([fechaInicio, fechaFin])
+  @@map("licencias")
+}
+
+/// Archivo subido por la empleada. Vive en un bucket privado de Supabase
+/// Storage: solo se guarda el path y se sirve con signed URLs de corta vida.
+model Comprobante {
+  id             String   @id @default(cuid())
+  licenciaId     String   @map("licencia_id")
+  path           String
+  nombreOriginal String   @map("nombre_original")
+  mimeType       String   @map("mime_type")
+  tamanioBytes   Int      @map("tamanio_bytes")
+  subidoEn       DateTime @default(now()) @map("subido_en")
+
+  licencia Licencia @relation(fields: [licenciaId], references: [id], onDelete: Cascade)
+
+  @@index([licenciaId])
+  @@map("comprobantes")
+}
+
+// ─────────────────── Catálogos y configuración ───────────────────
+
+model Sala {
+  id     String @id @default(cuid())
+  nombre String @unique
+  color  String @default("#94a3b8")
+
+  empleados Empleado[]
+
+  @@map("salas")
+}
+
+model Horario {
+  id                String @id @default(cuid())
+  turno             Turno  @unique
+  /// Hora local del jardín en formato "HH:mm".
+  horaInicio        String @map("hora_inicio") @db.VarChar(5)
+  horaFin           String @map("hora_fin") @db.VarChar(5)
+  toleranciaMinutos Int    @default(10) @map("tolerancia_minutos")
+
+  @@map("horarios")
+}
+
+/// Fila única (id = 1) con los parámetros del jardín.
+model Configuracion {
+  id                    Int      @id @default(1)
+  nombreJardin          String   @default("Mundo Feliz") @map("nombre_jardin")
+  /// Centro de la geocerca.
+  jardinLat             Float    @map("jardin_lat")
+  jardinLng             Float    @map("jardin_lng")
+  /// Radio permitido para fichar, en metros.
+  radioMetros           Int      @default(50) @map("radio_metros")
+  /// Si el GPS reporta una precisión peor que esto, se rechaza el fichaje.
+  precisionMaximaMetros Int      @default(100) @map("precision_maxima_metros")
+  /// Distancia euclídea máxima para dar por válido el rostro (menor = más estricto).
+  umbralFacial          Float    @default(0.4) @map("umbral_facial")
+  /// Scores mínimos de liveness y antispoof (0-1).
+  umbralLiveness        Float    @default(0.7) @map("umbral_liveness")
+  umbralAntispoof       Float    @default(0.7) @map("umbral_antispoof")
+  /// Días laborales, 0 = domingo … 6 = sábado.
+  diasLaborales         Int[]    @default([1, 2, 3, 4, 5]) @map("dias_laborales")
+  zonaHoraria           String   @default("America/Argentina/Buenos_Aires") @map("zona_horaria")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("configuracion")
+}
+
+model Feriado {
+  id          String   @id @default(cuid())
+  fecha       DateTime @unique @db.Date
+  descripcion String
+
+  @@map("feriados")
+}
+
+// ─────────────────────── Sueldos ───────────────────────
+
+/// Snapshot mensual: congela el valor hora para que un cambio posterior
+/// no altere liquidaciones ya generadas.
+model Liquidacion {
+  id                String   @id @default(cuid())
+  empleadoId        String   @map("empleado_id")
+  /// Período en formato "YYYY-MM".
+  periodo           String   @db.VarChar(7)
+  minutosTrabajados Int      @map("minutos_trabajados")
+  valorHora         Decimal  @map("valor_hora") @db.Decimal(10, 2)
+  total             Decimal  @db.Decimal(12, 2)
+  generadaEn        DateTime @default(now()) @map("generada_en")
+
+  empleado Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+
+  @@unique([empleadoId, periodo])
+  @@index([periodo])
+  @@map("liquidaciones")
+}
+
+// ─────────────────────── Auditoría ───────────────────────
+
+model Auditoria {
+  id          String   @id @default(cuid())
+  usuarioId   String?  @map("usuario_id")
+  accion      String
+  entidad     String
+  entidadId   String?  @map("entidad_id")
+  detalle     Json?
+  fecha       DateTime @default(now())
+  ip          String?
+  userAgent   String?  @map("user_agent")
+  navegador   String?
+  dispositivo String?
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([usuarioId, fecha])
+  @@index([entidad, entidadId])
+  @@map("auditoria")
+}
