@@ -15,17 +15,36 @@ export const DIMENSION_DESCRIPTOR = 1024;
  */
 export const MUESTRAS_ENROLAMIENTO = 10;
 
-/** Confianza mínima de la detección para tomar la muestra como buena. */
+/**
+ * Confianza mínima de la detección para tomar la muestra como buena.
+ *
+ * Se mide contra el mínimo entre `boxScore` (detección) y `faceScore` (malla),
+ * no contra `face.score`: ese último es `faceScore` redondeado a dos decimales
+ * y satura en 1.00 con cualquier cara pasable, así que compararlo contra un
+ * umbral no filtraba nada. El primer enrolamiento real dio 1.000 en las diez
+ * muestras, que fue justamente lo que delató el problema.
+ */
 export const CALIDAD_MINIMA = 0.6;
 
 /**
- * Similitud mínima entre las muestras de un mismo enrolamiento.
+ * Similitud mínima que se le exige a cada muestra contra la primera.
  *
  * Es la guarda contra enrolar a dos personas en el mismo legajo: si alguien
  * se cruza delante de la cámara a mitad de la captura, su muestra no se
- * parece a las anteriores y se descarta.
+ * parece a la de referencia y se descarta.
+ *
+ * Calibrado sobre el primer enrolamiento real: contra la primera muestra, las
+ * otras nueve dieron entre 0.53 y 0.82, y el peor par entre dos cualesquiera
+ * fue 0.41. O sea que los giros de cabeza que la pantalla pide separan más de
+ * lo que uno supondría, y el 0.5 que había dejaba 0.03 de margen: un giro un
+ * poco más amplio y una empleada legítima se comía un "no parecen ser la
+ * misma persona".
+ *
+ * Queda pendiente medirlo con dos personas distintas para saber cuánto margen
+ * real hay hasta el falso positivo; hasta entonces esto está calibrado por un
+ * solo lado.
  */
-export const SIMILITUD_MINIMA_ENTRE_MUESTRAS = 0.5;
+export const SIMILITUD_MINIMA_ENTRE_MUESTRAS = 0.4;
 
 /** Lado mínimo del rostro, en proporción del alto del video. Filtra a quien
  * pasa de fondo y a quien está demasiado lejos para dar un descriptor útil. */

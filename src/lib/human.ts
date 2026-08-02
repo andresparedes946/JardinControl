@@ -19,6 +19,12 @@ const CONFIG: Partial<Config> = {
   modelBasePath: "/models/",
   // Guarda los modelos en IndexedDB: la segunda vez arrancan sin red.
   cacheModels: true,
+  // Distinto de cacheModels: esto cachea *resultados*. Human saltea volver a
+  // correr los modelos si el frame se parece al anterior, y devuelve los
+  // valores de antes. Sirve para un demo a 60 fps; acá no: al enrolar
+  // convertiría muestras en copias de la anterior, y al fichar daría por
+  // buena una prueba de vida calculada sobre un frame que ya pasó.
+  cacheSensitivity: 0,
   // humangl es el WebGL propio de Human, con los ajustes que necesitan sus
   // modelos. Si el dispositivo no lo soporta, la librería cae sola a wasm.
   backend: "humangl",
@@ -26,13 +32,22 @@ const CONFIG: Partial<Config> = {
   debug: false,
   face: {
     enabled: true,
-    detector: { rotation: true, maxDetected: 2, return: false },
+    // skipFrames/skipTime en 0 en todos: por defecto Human reutiliza el
+    // resultado anterior durante 2,5 a 4 segundos segun el modelo. Cada
+    // deteccion tiene que hablar del frame que se le paso y de ninguno otro.
+    detector: {
+      rotation: true,
+      maxDetected: 2,
+      return: false,
+      skipFrames: 0,
+      skipTime: 0,
+    },
     mesh: { enabled: true },
-    description: { enabled: true },
+    description: { enabled: true, skipFrames: 0, skipTime: 0 },
     // Antispoof rechaza la foto de una foto; liveness, un video grabado.
     // Los dos hacen falta cuando se ficha desde el celular personal.
-    antispoof: { enabled: true },
-    liveness: { enabled: true },
+    antispoof: { enabled: true, skipFrames: 0, skipTime: 0 },
+    liveness: { enabled: true, skipFrames: 0, skipTime: 0 },
     iris: { enabled: false },
     emotion: { enabled: false },
     attention: { enabled: false },

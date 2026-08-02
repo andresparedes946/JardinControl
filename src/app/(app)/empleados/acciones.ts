@@ -239,8 +239,7 @@ export async function cambiarEstadoEmpleado(
  *
  * Ese mismo reparto obliga a desconfiar de lo que llega: el navegador puede
  * mandar diez vectores cualesquiera. Contra eso, el servidor comprueba que
- * las diez muestras se parezcan entre sí, que es lo que no puede pasar si
- * salieron de diez fotos distintas de la misma persona.
+ * todas se parezcan a la primera, que es la que se toma mirando de frente.
  */
 export async function guardarDescriptores(
   id: string,
@@ -258,8 +257,11 @@ export async function guardarDescriptores(
 
   const { muestras } = parseado.data;
 
-  // Basta comparar cada muestra contra la primera: si todas se parecen a
-  // ella, se parecen entre sí lo suficiente para este control.
+  // La referencia es la primera muestra, tomada de frente. No se comparan
+  // todas contra todas a propósito: en un enrolamiento real medido, las
+  // muestras extremas de los giros a izquierda y derecha quedaron a 0.41
+  // entre sí, muy por debajo del umbral, aun siendo de la misma persona.
+  // Exigir coherencia de a pares rechazaría enrolamientos legítimos.
   const referencia = muestras[0].descriptor;
   const dispar = muestras
     .slice(1)

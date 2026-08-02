@@ -17,6 +17,7 @@ import {
   PROPORCION_MINIMA_ROSTRO,
   REAL_MINIMO_ENROLAMIENTO,
   SIMILITUD_MINIMA_ENTRE_MUESTRAS,
+  distancia,
   similitud,
 } from "@/lib/rostro";
 import type { MuestraFacial } from "@/lib/validaciones";
@@ -85,7 +86,10 @@ export function CapturaFacial({ empleadoId, onGuardado, onCancelar }: Props) {
 
       const cara = caras[0];
 
-      if (cara.score < CALIDAD_MINIMA) return "Quedate quieta un momento";
+      // El más flojo de los dos manda: de nada sirve una malla perfecta sobre
+      // una detección dudosa, ni al revés.
+      const calidad = Math.min(cara.boxScore, cara.faceScore);
+      if (calidad < CALIDAD_MINIMA) return "Quedate quieta un momento";
 
       if (cara.box[3] / video.videoHeight < PROPORCION_MINIMA_ROSTRO) {
         return "Acercate un poco más a la cámara";
@@ -125,8 +129,16 @@ export function CapturaFacial({ empleadoId, onGuardado, onCancelar }: Props) {
         return null;
       }
 
+      // Human puede devolver el mismo vector dos veces si el frame casi no
+      // cambió. Con el caché apagado no debería pasar, pero una muestra
+      // repetida ocupa un lugar sin aportar nada, así que se descarta acá
+      // también: es barato y no depende de la configuración de la librería.
+      if (previas.some((p) => distancia(p.descriptor, descriptor) === 0)) {
+        return "Movete un poquito para la próxima toma";
+      }
+
       ultimaRef.current = performance.now();
-      previas.push({ descriptor, calidad: cara.score });
+      previas.push({ descriptor, calidad });
       setTomadas(previas.length);
 
       return null;
