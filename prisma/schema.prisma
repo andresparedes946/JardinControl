@@ -272,8 +272,10 @@ model Configuracion {
   radioMetros           Int      @default(50) @map("radio_metros")
   /// Si el GPS reporta una precisión peor que esto, se rechaza el fichaje.
   precisionMaximaMetros Int      @default(100) @map("precision_maxima_metros")
-  /// Distancia euclídea máxima para dar por válido el rostro (menor = más estricto).
-  umbralFacial          Float    @default(0.4) @map("umbral_facial")
+  /// Similitud mínima para dar por válido el rostro, de 0 a 1 (mayor = más
+  /// estricto). Es la escala normalizada de @vladmandic/human, no una
+  /// distancia: ver `similitud()` en src/lib/rostro.ts.
+  similitudMinima       Float    @default(0.5) @map("similitud_minima")
   /// Scores mínimos de liveness y antispoof (0-1).
   umbralLiveness        Float    @default(0.7) @map("umbral_liveness")
   umbralAntispoof       Float    @default(0.7) @map("umbral_antispoof")

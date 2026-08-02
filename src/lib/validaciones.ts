@@ -147,10 +147,13 @@ export const configuracionSchema = z.object({
     .int()
     .min(5, "Mínimo 5 m")
     .max(500, "Máximo 500 m"),
-  umbralFacial: z.coerce
+  // Va al revés que la distancia que había antes: más alto, más estricto.
+  // Por debajo de 0.3 entra cualquier cara; por encima de 0.9 no entra ni la
+  // titular con otra luz.
+  similitudMinima: z.coerce
     .number()
-    .min(0.1, "Mínimo 0.1")
-    .max(1.5, "Más de 1.5 acepta cualquier rostro"),
+    .min(0.3, "Menos de 0.3 acepta casi cualquier rostro")
+    .max(0.9, "Más de 0.9 rechaza hasta a la propia empleada"),
   umbralLiveness: z.coerce.number().min(0).max(1),
   umbralAntispoof: z.coerce.number().min(0).max(1),
   diasLaborales: z

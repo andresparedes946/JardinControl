@@ -238,22 +238,23 @@ export function FormularioGeocerca({ inicial }: { inicial: Valores }) {
         <CardHeader>
           <CardTitle>Reconocimiento facial</CardTitle>
           <CardDescription>
-            Cuanto más bajo el umbral facial, más estricto. Los de liveness y
-            antispoof son al revés: más alto, más exigente.
+            Los tres van de 0 a 1 y en el mismo sentido: cuanto más alto, más
+            exigente. Subirlos rechaza más fichajes legítimos; bajarlos deja
+            pasar más ajenos.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <Campo
-            id="umbralFacial"
-            etiqueta="Umbral facial"
-            ayuda="Distancia máxima aceptada"
-            error={errors.umbralFacial?.message}
+            id="similitudMinima"
+            etiqueta="Similitud mínima"
+            ayuda="Parecido exigido con el rostro registrado"
+            error={errors.similitudMinima?.message}
           >
             <Input
-              id="umbralFacial"
+              id="similitudMinima"
               type="number"
-              step="0.01"
-              {...register("umbralFacial")}
+              step="0.05"
+              {...register("similitudMinima")}
             />
           </Campo>
 

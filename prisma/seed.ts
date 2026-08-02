@@ -24,7 +24,9 @@ const CONFIGURACION = {
   // Con un radio de 50 m conviene exigir buena señal: aceptar lecturas de
   // ±100 m volvería la geocerca casi decorativa.
   precisionMaximaMetros: 40,
-  umbralFacial: 0.4,
+  // Escala normalizada de Human: 0.5 es el piso que su documentación da por
+  // coincidencia. Se recalibra con caras reales antes de habilitar el fichaje.
+  similitudMinima: 0.5,
   umbralLiveness: 0.7,
   umbralAntispoof: 0.7,
   diasLaborales: [1, 2, 3, 4, 5],

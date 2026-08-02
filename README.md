@@ -87,7 +87,6 @@ Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
 contraseñas) y Fase 2 (registro facial). El detalle de las fases siguientes
 está en `EstructuraJardin.md` y en el plan de implementación.
 
-Pendiente antes de la Fase 3: `Configuracion.umbralFacial` está documentado
-como distancia euclídea con default 0.4, pero Human trabaja en otra escala
-(ver `src/lib/rostro.ts`). Hay que convertirlo a "similitud mínima" 0..1
-antes de que lo lea el fichaje.
+El `similitudMinima` de la configuración arranca en 0.5, que es el piso que
+recomienda la documentación de Human. Hay que recalibrarlo con caras reales
+del jardín antes de habilitar el fichaje.
