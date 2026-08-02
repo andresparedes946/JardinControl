@@ -83,6 +83,7 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
 | `npm run db:studio` | Prisma Studio |
 | `npm run iconos` | Regenera los íconos de la PWA |
 | `npm run modelos` | Vuelve a bajar los modelos de reconocimiento facial a `public/models` |
+| `npm run rostros` | Mide los enrolamientos guardados, para calibrar los umbrales con datos |
 
 ## Decisiones que conviene conocer
 
