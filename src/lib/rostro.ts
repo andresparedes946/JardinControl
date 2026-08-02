@@ -23,8 +23,12 @@ export const MUESTRAS_ENROLAMIENTO = 10;
  * y satura en 1.00 con cualquier cara pasable, así que compararlo contra un
  * umbral no filtraba nada. El primer enrolamiento real dio 1.000 en las diez
  * muestras, que fue justamente lo que delató el problema.
+ *
+ * Con la métrica arreglada, dos enrolamientos reales dieron entre 0.70 y 0.91:
+ * el piso queda en 0.70, que descarta las capturas más flojas sin volver
+ * eterna la toma.
  */
-export const CALIDAD_MINIMA = 0.6;
+export const CALIDAD_MINIMA = 0.7;
 
 /**
  * Similitud mínima que se le exige a cada muestra contra la primera.
@@ -50,10 +54,19 @@ export const SIMILITUD_MINIMA_ENTRE_MUESTRAS = 0.4;
  * pasa de fondo y a quien está demasiado lejos para dar un descriptor útil. */
 export const PROPORCION_MINIMA_ROSTRO = 0.25;
 
-/** Grados de giro tolerados en cada eje al enrolar. Deja lugar a los giros
- * que la pantalla va pidiendo, sin llegar al perfil, donde el descriptor
- * pierde la mitad de la cara. */
-export const GIRO_MAXIMO_GRADOS = 25;
+/**
+ * Grados de giro tolerados en cada eje al enrolar.
+ *
+ * Empezó en 25 para dejar lugar a giros amplios, con la idea de que más
+ * variedad de pose era mejor. Medido, resultó al revés: con dos rostros
+ * enrolados, las muestras de tres cuartos quedaron a 0.40 de la frontal de su
+ * propia dueña, mientras que el máximo entre personas distintas trepó a 0.39.
+ * Una cara girada lleva menos información de identidad, así que se parece
+ * poco a sí misma y bastante a cualquier otra: es la peor combinación
+ * posible. La variedad que sirve al enrolar es de luz y de gesto, no de
+ * ángulo.
+ */
+export const GIRO_MAXIMO_GRADOS = 15;
 
 /**
  * Mínimo de antispoof y de prueba de vida exigido al enrolar.

@@ -32,15 +32,20 @@ type Props = {
 };
 
 /**
- * Consignas que van cambiando a medida que avanzan las capturas. Guían a la
- * empleada para que las diez muestras no sean el mismo gesto repetido: si
- * todas salen de la misma pose, al fichar solo se la reconoce en esa pose.
+ * Consignas que van cambiando a medida que avanzan las capturas.
+ *
+ * Buscan variedad de gesto y de encuadre, no de ángulo. La primera versión
+ * pedía girar la cabeza a cada lado, y medido salió contraproducente: las
+ * caras de tres cuartos se parecían poco a la frontal de su propia dueña y
+ * bastante a las de otra persona. Ahora la cara se mantiene siempre de
+ * frente y lo que cambia es la expresión y la distancia.
  */
 const CONSIGNAS = [
-  { hasta: 4, texto: "Mirá de frente a la cámara" },
-  { hasta: 6, texto: "Girá despacio la cabeza hacia tu izquierda" },
-  { hasta: 8, texto: "Ahora despacio hacia tu derecha" },
-  { hasta: MUESTRAS_ENROLAMIENTO, texto: "Volvé al frente y sonreí" },
+  { hasta: 3, texto: "Mirá de frente a la cámara" },
+  { hasta: 5, texto: "Seguí de frente, con una sonrisa" },
+  { hasta: 7, texto: "Ahora con la cara relajada" },
+  { hasta: 9, texto: "Movete apenas, sin dejar de mirar la cámara" },
+  { hasta: MUESTRAS_ENROLAMIENTO, texto: "Última: mirá de frente y sonreí" },
 ];
 
 const consignaPara = (tomadas: number) =>
