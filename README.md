@@ -56,6 +56,7 @@ un deploy de preview. `http://` sobre una IP de LAN no sirve.
 | `npm run db:seed` | Carga datos iniciales (idempotente) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run iconos` | Regenera los íconos de la PWA |
+| `npm run modelos` | Vuelve a bajar los modelos de reconocimiento facial a `public/models` |
 
 ## Decisiones que conviene conocer
 
@@ -66,6 +67,13 @@ un deploy de preview. `http://` sobre una IP de LAN no sirve.
   distancia y la precisión que reportó el dispositivo.
 - **Solo se guardan vectores faciales, nunca fotos.** Las capturas del
   enrolamiento se descartan apenas se calcula el embedding.
+- **Los modelos se sirven desde `public/models`, no desde el CDN del autor.**
+  Están versionados en el repo (unos 10 MB) para que el fichaje no dependa de
+  un tercero ni de una descarga en el momento. `npm run modelos` los rebaja.
+- **`@vladmandic/human` está en `serverExternalPackages`.** Su `exports` mapea
+  la condición `node` a un build que importa `@tensorflow/tfjs-node`, y sin
+  eso el bundler del servidor lo resuelve y falla. Se usa únicamente desde el
+  navegador, cargado con `next/dynamic` y `ssr: false`.
 - **Las horas se calculan en UTC y se muestran en hora de Buenos Aires.**
   Ver `src/lib/time.ts`: mezclarlas corre un día los fichajes de la noche.
 - **La geocerca acepta cuando el círculo de incertidumbre del GPS se
@@ -75,5 +83,11 @@ un deploy de preview. `http://` sobre una IP de LAN no sirve.
 
 ## Estado
 
-Fase 0 (andamiaje) terminada. El detalle de las fases siguientes está en
-`EstructuraJardin.md` y en el plan de implementación.
+Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
+contraseñas) y Fase 2 (registro facial). El detalle de las fases siguientes
+está en `EstructuraJardin.md` y en el plan de implementación.
+
+Pendiente antes de la Fase 3: `Configuracion.umbralFacial` está documentado
+como distancia euclídea con default 0.4, pero Human trabaja en otra escala
+(ver `src/lib/rostro.ts`). Hay que convertirlo a "similitud mínima" 0..1
+antes de que lo lea el fichaje.

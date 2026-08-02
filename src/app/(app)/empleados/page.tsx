@@ -162,16 +162,22 @@ async function Contenido({ searchParams }: { searchParams: Params }) {
                       {pesos.format(Number(e.valorHora))}
                     </TableCell>
                     <TableCell>
-                      {e._count.descriptores > 0 ? (
-                        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                          <ScanFace className="size-3.5" />
-                          Registrado
-                        </span>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">
-                          Sin registrar
-                        </Badge>
-                      )}
+                      <Link
+                        href={`/empleados/${e.id}/rostro`}
+                        className="hover:underline"
+                        aria-label={`Registro facial de ${e.usuario.nombre} ${e.usuario.apellido}`}
+                      >
+                        {e._count.descriptores > 0 ? (
+                          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                            <ScanFace className="size-3.5" />
+                            Registrado
+                          </span>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            Sin registrar
+                          </Badge>
+                        )}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <Badge

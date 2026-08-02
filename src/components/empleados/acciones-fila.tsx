@@ -1,6 +1,13 @@
 "use client";
 
-import { KeyRound, MoreHorizontal, Pencil, UserCheck, UserX } from "lucide-react";
+import {
+  KeyRound,
+  MoreHorizontal,
+  Pencil,
+  ScanFace,
+  UserCheck,
+  UserX,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -82,6 +89,10 @@ export function AccionesFila({ id, nombre, estado }: Props) {
           <DropdownMenuItem render={<Link href={`/empleados/${id}`} />}>
             <Pencil className="size-4" />
             Editar
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href={`/empleados/${id}/rostro`} />}>
+            <ScanFace className="size-4" />
+            Registro facial
           </DropdownMenuItem>
           <DropdownMenuItem onClick={restablecer}>
             <KeyRound className="size-4" />

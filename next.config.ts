@@ -10,7 +10,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@prisma/adapter-pg"],
+  serverExternalPackages: ["@prisma/adapter-pg", "@vladmandic/human"],
   // Por defecto el indicador de desarrollo se planta abajo a la izquierda,
   // justo encima del "Cerrar sesión" de la barra lateral, y se lo come.
   devIndicators: {

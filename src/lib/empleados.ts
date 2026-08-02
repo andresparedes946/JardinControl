@@ -69,6 +69,23 @@ export async function obtenerEmpleado(id: string) {
   });
 }
 
+/**
+ * Estado del enrolamiento facial: cuántas muestras vigentes hay y de cuándo.
+ * Devuelve null si nunca se enroló, que es lo que impide fichar.
+ */
+export async function obtenerEnrolamiento(empleadoId: string) {
+  const [muestras, ultima] = await Promise.all([
+    prisma.descriptorFacial.count({ where: { empleadoId, activo: true } }),
+    prisma.descriptorFacial.findFirst({
+      where: { empleadoId, activo: true },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  return ultima ? { muestras, fecha: ultima.createdAt } : null;
+}
+
 export async function listarSalas() {
   return prisma.sala.findMany({
     orderBy: { nombre: "asc" },

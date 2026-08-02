@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { DIMENSION_DESCRIPTOR, MUESTRAS_ENROLAMIENTO } from "@/lib/rostro";
+
 /**
  * Esquemas compartidos entre los formularios del cliente y las Server
  * Actions. La misma validación corre en los dos lados: el cliente para dar
@@ -94,6 +96,34 @@ export const filtrosEmpleadosSchema = z.object({
 });
 
 export type FiltrosEmpleados = z.infer<typeof filtrosEmpleadosSchema>;
+
+// ─────────────────────────── Registro facial ───────────────────────────
+
+/**
+ * El descriptor lo calcula el navegador, así que llega como cualquier otro
+ * dato del cliente: sin confianza. Se comprueba el largo exacto que produce
+ * el modelo y que cada componente sea un número real.
+ */
+export const muestraFacialSchema = z.object({
+  descriptor: z
+    .array(z.number().finite("El descriptor tiene valores inválidos"))
+    .length(
+      DIMENSION_DESCRIPTOR,
+      `El descriptor no mide ${DIMENSION_DESCRIPTOR} valores`,
+    ),
+  calidad: z.number().min(0).max(1),
+});
+
+export const enrolamientoSchema = z.object({
+  muestras: z
+    .array(muestraFacialSchema)
+    .length(
+      MUESTRAS_ENROLAMIENTO,
+      `Hacen falta ${MUESTRAS_ENROLAMIENTO} muestras`,
+    ),
+});
+
+export type MuestraFacial = z.infer<typeof muestraFacialSchema>;
 
 // ─────────────────────────── Configuración ───────────────────────────
 

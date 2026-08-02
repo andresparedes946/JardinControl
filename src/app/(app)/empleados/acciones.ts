@@ -6,9 +6,15 @@ import { revalidatePath } from "next/cache";
 import { registrarAuditoria } from "@/lib/auditoria";
 import { generarPasswordProvisional } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import {
+  MUESTRAS_ENROLAMIENTO,
+  SIMILITUD_MINIMA_ENTRE_MUESTRAS,
+  similitud,
+} from "@/lib/rostro";
 import { requerirAdmin } from "@/lib/session";
 import {
   empleadoSchema,
+  enrolamientoSchema,
   nuevoEmpleadoSchema,
   type DatosEmpleado,
 } from "@/lib/validaciones";
@@ -221,6 +227,135 @@ export async function cambiarEstadoEmpleado(
   } catch (error) {
     console.error("cambiarEstadoEmpleado:", error);
     return { ok: false, error: "No se pudo cambiar el estado." };
+  }
+}
+
+/**
+ * Guarda el enrolamiento facial de una empleada.
+ *
+ * Las fotos del enrolamiento nunca salen del navegador: lo que viaja y se
+ * guarda son los vectores, que no permiten reconstruir la cara. Es también
+ * la razón por la que el descriptor lo calcula el cliente.
+ *
+ * Ese mismo reparto obliga a desconfiar de lo que llega: el navegador puede
+ * mandar diez vectores cualesquiera. Contra eso, el servidor comprueba que
+ * las diez muestras se parezcan entre sí, que es lo que no puede pasar si
+ * salieron de diez fotos distintas de la misma persona.
+ */
+export async function guardarDescriptores(
+  id: string,
+  entrada: unknown,
+): Promise<Resultado> {
+  const sesion = await requerirAdmin();
+
+  const parseado = enrolamientoSchema.safeParse(entrada);
+  if (!parseado.success) {
+    return {
+      ok: false,
+      error: parseado.error.issues[0]?.message ?? "Muestras inválidas",
+    };
+  }
+
+  const { muestras } = parseado.data;
+
+  // Basta comparar cada muestra contra la primera: si todas se parecen a
+  // ella, se parecen entre sí lo suficiente para este control.
+  const referencia = muestras[0].descriptor;
+  const dispar = muestras
+    .slice(1)
+    .some(
+      (m) =>
+        similitud(referencia, m.descriptor) < SIMILITUD_MINIMA_ENTRE_MUESTRAS,
+    );
+
+  if (dispar) {
+    return {
+      ok: false,
+      error:
+        "Las muestras no parecen ser de la misma persona. Repetí la captura con una sola cara frente a la cámara.",
+    };
+  }
+
+  try {
+    const empleado = await prisma.empleado.findUnique({
+      where: { id },
+      select: { usuario: { select: { nombre: true, apellido: true } } },
+    });
+
+    if (!empleado) return { ok: false, error: "No se encontró la empleada." };
+
+    const previos = await prisma.$transaction(async (tx) => {
+      // Un enrolamiento nuevo reemplaza al anterior en vez de sumarse: los
+      // vectores viejos son datos biométricos que ya no hacen falta, y
+      // dejarlos activos ampliaría para siempre lo que da por buena la cara.
+      const { count } = await tx.descriptorFacial.deleteMany({
+        where: { empleadoId: id },
+      });
+
+      await tx.descriptorFacial.createMany({
+        data: muestras.map((m) => ({
+          empleadoId: id,
+          descriptor: m.descriptor,
+          calidad: m.calidad,
+        })),
+      });
+
+      return count;
+    });
+
+    await registrarAuditoria({
+      usuarioId: sesion.user.id,
+      accion: previos > 0 ? "REENROLAR_ROSTRO" : "ENROLAR_ROSTRO",
+      entidad: "Empleado",
+      entidadId: id,
+      detalle: { muestras: muestras.length, reemplazadas: previos },
+    });
+
+    revalidatePath("/empleados");
+    revalidatePath(`/empleados/${id}/rostro`);
+
+    const nombre = `${empleado.usuario.nombre} ${empleado.usuario.apellido}`;
+    return {
+      ok: true,
+      mensaje: `Rostro de ${nombre} registrado con ${muestras.length} muestras.`,
+    };
+  } catch (error) {
+    console.error("guardarDescriptores:", error);
+    return { ok: false, error: "No se pudo guardar el registro facial." };
+  }
+}
+
+/** Borra el enrolamiento. Deja a la empleada sin poder fichar hasta repetirlo. */
+export async function borrarDescriptores(id: string): Promise<Resultado> {
+  const sesion = await requerirAdmin();
+
+  try {
+    const { count } = await prisma.descriptorFacial.deleteMany({
+      where: { empleadoId: id },
+    });
+
+    if (count === 0) {
+      return { ok: false, error: "Esa empleada no tiene rostro registrado." };
+    }
+
+    await registrarAuditoria({
+      usuarioId: sesion.user.id,
+      accion: "BORRAR_ROSTRO",
+      entidad: "Empleado",
+      entidadId: id,
+      detalle: { muestras: count },
+    });
+
+    revalidatePath("/empleados");
+    revalidatePath(`/empleados/${id}/rostro`);
+
+    return {
+      ok: true,
+      mensaje: `Registro facial borrado. Hay que volver a tomar las ${MUESTRAS_ENROLAMIENTO} muestras para que pueda fichar.`,
+    };
+  } catch (error) {
+    console.error("borrarDescriptores:", error);
+    return { ok: false, error: "No se pudo borrar el registro facial." };
   }
 }
 

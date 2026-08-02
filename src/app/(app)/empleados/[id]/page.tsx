@@ -1,3 +1,4 @@
+import { ScanFace } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,13 +37,23 @@ export default async function EditarEmpleadaPage({
             Legajo {empleado.legajo}
           </p>
         </div>
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<Link href="/empleados" />}
-        >
-          Volver
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={`/empleados/${empleado.id}/rostro`} />}
+          >
+            <ScanFace className="size-4" />
+            Registro facial
+          </Button>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/empleados" />}
+          >
+            Volver
+          </Button>
+        </div>
       </div>
 
       <FormularioEmpleado
