@@ -40,15 +40,41 @@ npm run dev
 
 ### Probar en un celular
 
-La cámara y el GPS **solo funcionan sobre HTTPS**. Para probar en un teléfono
-real hace falta un túnel (`cloudflared tunnel --url http://localhost:3000`) o
-un deploy de preview. `http://` sobre una IP de LAN no sirve.
+La cámara y el GPS **solo funcionan sobre HTTPS**: apuntar el teléfono a la IP
+de LAN por `http://` no alcanza, el navegador bloquea la cámara sin decir por
+qué. Con `npm run dev:https` el servidor levanta sobre TLS con un certificado
+propio, que hay que generar una vez con la IP de esta máquina:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+  -keyout certificates/dev-key.pem -out certificates/dev-cert.pem \
+  -subj "/CN=JardinControl dev" \
+  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:TU.IP.DE.LAN"
+```
+
+Se genera a mano y no con el mkcert que trae Next porque mkcert instala una CA
+en el almacén de confianza del sistema, y eso abre un diálogo de Windows que
+no siempre se puede atender. Al pasarle `--experimental-https-key` y `-cert`,
+Next se saltea mkcert por completo.
+
+Falta abrir el puerto: Windows bloquea la entrada por defecto, así que desde
+un PowerShell **como administrador**, una vez:
+
+```bash
+New-NetFirewallRule -DisplayName "JardinControl dev 3000" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3000 -Profile Private
+```
+
+Desde el teléfono, en la misma red, entrar a `https://<IP-de-la-PC>:3000` y
+aceptar la advertencia de certificado (Configuración avanzada → Acceder al
+sitio). Chrome sigue considerando la página contexto seguro y habilita la
+cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
 
 ## Comandos
 
 | Comando | Qué hace |
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
+| `npm run dev:https` | Igual, sobre TLS y abierto a la red, para probar cámara y GPS en un celular |
 | `npm run build` | Genera el cliente Prisma y compila |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |

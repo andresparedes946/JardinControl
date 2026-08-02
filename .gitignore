@@ -47,6 +47,10 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# certificado autofirmado para probar cámara y GPS en un celular (npm run
+# dev:https). Es de cada máquina y lleva su clave privada: nunca al repo.
+/certificates
+
 # service worker generado por Serwist
 /public/sw.js
 /public/sw.js.map
