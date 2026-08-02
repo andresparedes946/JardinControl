@@ -101,6 +101,12 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   la condición `node` a un build que importa `@tensorflow/tfjs-node`, y sin
   eso el bundler del servidor lo resuelve y falla. Se usa únicamente desde el
   navegador, cargado con `next/dynamic` y `ssr: false`.
+- **Al enrolar, la cara va siempre de frente.** Parece intuitivo pedir giros
+  para juntar variedad de pose, y es peor: una cara de tres cuartos lleva
+  menos información de identidad, así que se parece poco a la frontal de su
+  propia dueña y bastante a la de cualquier otra. Medido con dos rostros, los
+  giros dejaban 0.01 de separación entre el peor caso legítimo y el mejor
+  impostor; de frente, 0.34.
 - **Las horas se calculan en UTC y se muestran en hora de Buenos Aires.**
   Ver `src/lib/time.ts`: mezclarlas corre un día los fichajes de la noche.
 - **La geocerca acepta cuando el círculo de incertidumbre del GPS se
@@ -114,6 +120,15 @@ Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
 contraseñas) y Fase 2 (registro facial). El detalle de las fases siguientes
 está en `EstructuraJardin.md` y en el plan de implementación.
 
-El `similitudMinima` de la configuración arranca en 0.5, que es el piso que
-recomienda la documentación de Human. Hay que recalibrarlo con caras reales
-del jardín antes de habilitar el fichaje.
+El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
+rostros reales enrolados (`npm run rostros`):
+
+| | similitud |
+|---|---|
+| Misma persona, contra su muestra frontal | 0.54 – 0.93 |
+| Personas distintas, máximo cruzado | 0.19 |
+
+Son dos personas, no una muestra estadística. La prueba de verdad llega con
+el fichaje: la tabla `fichajes` guarda el `score_facial` de **todo** intento,
+aceptado o rechazado, justamente para poder ajustar el umbral con intentos
+reales en vez de suposiciones.

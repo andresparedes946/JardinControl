@@ -24,9 +24,9 @@ export const MUESTRAS_ENROLAMIENTO = 10;
  * umbral no filtraba nada. El primer enrolamiento real dio 1.000 en las diez
  * muestras, que fue justamente lo que delató el problema.
  *
- * Con la métrica arreglada, dos enrolamientos reales dieron entre 0.70 y 0.91:
- * el piso queda en 0.70, que descarta las capturas más flojas sin volver
- * eterna la toma.
+ * Con la métrica arreglada y enrolando de frente, dos enrolamientos reales
+ * dieron entre 0.83 y 0.92. El piso en 0.70 descarta las capturas flojas sin
+ * volver eterna la toma.
  */
 export const CALIDAD_MINIMA = 0.7;
 
@@ -37,18 +37,19 @@ export const CALIDAD_MINIMA = 0.7;
  * se cruza delante de la cámara a mitad de la captura, su muestra no se
  * parece a la de referencia y se descarta.
  *
- * Calibrado sobre el primer enrolamiento real: contra la primera muestra, las
- * otras nueve dieron entre 0.53 y 0.82, y el peor par entre dos cualesquiera
- * fue 0.41. O sea que los giros de cabeza que la pantalla pide separan más de
- * lo que uno supondría, y el 0.5 que había dejaba 0.03 de margen: un giro un
- * poco más amplio y una empleada legítima se comía un "no parecen ser la
- * misma persona".
+ * Medido sobre dos rostros reales enrolados de frente (`npm run rostros`):
  *
- * Queda pendiente medirlo con dos personas distintas para saber cuánto margen
- * real hay hasta el falso positivo; hasta entonces esto está calibrado por un
- * solo lado.
+ *   misma persona, contra su muestra frontal   0.54 a 0.93
+ *   personas distintas, máximo cruzado         0.19
+ *
+ * Cualquier valor entre 0.25 y 0.5 cumple la función. Queda en 0.45, que deja
+ * margen de los dos lados: bien por encima de lo que puede alcanzar una cara
+ * ajena y por debajo del piso legítimo observado.
+ *
+ * Son dos personas, no una muestra estadística. Si aparecieran rechazos al
+ * enrolar, este es el primer número a revisar.
  */
-export const SIMILITUD_MINIMA_ENTRE_MUESTRAS = 0.4;
+export const SIMILITUD_MINIMA_ENTRE_MUESTRAS = 0.45;
 
 /** Lado mínimo del rostro, en proporción del alto del video. Filtra a quien
  * pasa de fondo y a quien está demasiado lejos para dar un descriptor útil. */
@@ -65,6 +66,10 @@ export const PROPORCION_MINIMA_ROSTRO = 0.25;
  * poco a sí misma y bastante a cualquier otra: es la peor combinación
  * posible. La variedad que sirve al enrolar es de luz y de gesto, no de
  * ángulo.
+ *
+ * Rehechos los mismos dos enrolamientos siempre de frente, el piso propio
+ * subió de 0.40 a 0.53 y el máximo cruzado bajó de 0.39 a 0.19: de un
+ * centésimo de separación a 0.34.
  */
 export const GIRO_MAXIMO_GRADOS = 15;
 

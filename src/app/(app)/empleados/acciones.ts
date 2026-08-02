@@ -257,11 +257,9 @@ export async function guardarDescriptores(
 
   const { muestras } = parseado.data;
 
-  // La referencia es la primera muestra, tomada de frente. No se comparan
-  // todas contra todas a propósito: en un enrolamiento real medido, las
-  // muestras extremas de los giros a izquierda y derecha quedaron a 0.41
-  // entre sí, muy por debajo del umbral, aun siendo de la misma persona.
-  // Exigir coherencia de a pares rechazaría enrolamientos legítimos.
+  // La referencia es la primera muestra. Comparar contra ella y no todas
+  // contra todas mantiene el control en O(n) y ancla el parecido a la captura
+  // frontal, que es la que más información de identidad tiene.
   const referencia = muestras[0].descriptor;
   const dispar = muestras
     .slice(1)
