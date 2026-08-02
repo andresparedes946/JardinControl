@@ -180,7 +180,8 @@ model Fichaje {
   precisionMetros Float?           @map("precision_metros")
   /// Distancia calculada en el servidor entre el dispositivo y el jardín.
   distanciaMetros Float?           @map("distancia_metros")
-  /// Distancia euclídea al descriptor más cercano (menor = mejor).
+  /// Similitud contra el descriptor enrolado más parecido, 0 a 1 (mayor =
+  /// mejor). Misma escala que Configuracion.similitudMinima.
   scoreFacial     Float?           @map("score_facial")
   scoreLiveness   Float?           @map("score_liveness")
   scoreAntispoof  Float?           @map("score_antispoof")

@@ -125,6 +125,32 @@ export const enrolamientoSchema = z.object({
 
 export type MuestraFacial = z.infer<typeof muestraFacialSchema>;
 
+// ─────────────────────────── Fichaje ───────────────────────────
+
+/**
+ * Lo que manda el navegador al fichar: un descriptor, la lectura del GPS y
+ * los scores que produjo el modelo. Nada de esto se toma por bueno; el
+ * servidor decide con estos valores pero validándolos primero.
+ */
+export const fichajeSchema = z.object({
+  descriptor: z
+    .array(z.number().finite("El descriptor tiene valores inválidos"))
+    .length(
+      DIMENSION_DESCRIPTOR,
+      `El descriptor no mide ${DIMENSION_DESCRIPTOR} valores`,
+    ),
+  calidad: z.number().min(0).max(1),
+  scoreLiveness: z.number().min(0).max(1),
+  scoreAntispoof: z.number().min(0).max(1),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  // Sin tope superior a propósito: una precisión malísima es un dato válido
+  // que el servidor tiene que ver para poder rechazarla y dejarla registrada.
+  precisionMetros: z.number().min(0),
+});
+
+export type DatosFichaje = z.infer<typeof fichajeSchema>;
+
 // ─────────────────────────── Configuración ───────────────────────────
 
 export const configuracionSchema = z.object({
