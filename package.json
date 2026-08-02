@@ -17,7 +17,8 @@
     "db:studio": "prisma studio",
     "iconos": "node scripts/generar-iconos.mjs",
     "modelos": "node scripts/descargar-modelos.mjs",
-    "rostros": "tsx scripts/medir-rostros.ts"
+    "rostros": "tsx scripts/medir-rostros.ts",
+    "fichajes": "tsx scripts/ver-fichajes.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
