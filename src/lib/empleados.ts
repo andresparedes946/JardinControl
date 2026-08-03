@@ -86,6 +86,22 @@ export async function obtenerEnrolamiento(empleadoId: string) {
   return ultima ? { muestras, fecha: ultima.createdAt } : null;
 }
 
+/** Lista breve para poblar selectores de filtro. */
+export async function listarEmpleadosParaSelector() {
+  const empleados = await prisma.empleado.findMany({
+    select: {
+      id: true,
+      usuario: { select: { nombre: true, apellido: true } },
+    },
+    orderBy: [{ usuario: { apellido: "asc" } }, { usuario: { nombre: "asc" } }],
+  });
+
+  return empleados.map((e) => ({
+    id: e.id,
+    nombre: `${e.usuario.apellido}, ${e.usuario.nombre}`,
+  }));
+}
+
 export async function listarSalas() {
   return prisma.sala.findMany({
     orderBy: { nombre: "asc" },

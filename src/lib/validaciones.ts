@@ -125,6 +125,74 @@ export const enrolamientoSchema = z.object({
 
 export type MuestraFacial = z.infer<typeof muestraFacialSchema>;
 
+// ─────────────────────────── Asistencias ───────────────────────────
+
+export const ESTADOS_ASISTENCIA = [
+  "PRESENTE",
+  "TARDE",
+  "AUSENTE",
+  "JUSTIFICADA",
+  "LICENCIA",
+] as const;
+
+export const ETIQUETA_ESTADO_ASISTENCIA: Record<
+  (typeof ESTADOS_ASISTENCIA)[number],
+  string
+> = {
+  PRESENTE: "Presente",
+  TARDE: "Tarde",
+  AUSENTE: "Ausente",
+  JUSTIFICADA: "Justificada",
+  LICENCIA: "Licencia",
+};
+
+const periodoYYYYMM = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Período inválido");
+
+export const filtrosAsistenciasSchema = z.object({
+  periodo: periodoYYYYMM.optional(),
+  empleado: z.string().optional(),
+  sala: z.string().optional(),
+  estado: z.enum(ESTADOS_ASISTENCIA).optional(),
+});
+
+export type FiltrosAsistencias = z.infer<typeof filtrosAsistenciasSchema> & {
+  periodo: string;
+};
+
+/**
+ * Corrección manual de una jornada.
+ *
+ * Las horas se escriben en hora del jardín; el servidor las convierte al
+ * instante UTC que corresponda. Vacías significan "sin registrar", que es
+ * distinto de cero: una empleada que no fichó la salida no trabajó 0 minutos,
+ * simplemente no se sabe.
+ */
+export const ajusteAsistenciaSchema = z
+  .object({
+    horaIngreso: z
+      .string()
+      .trim()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$|^$/, "Usá el formato HH:mm"),
+    horaSalida: z
+      .string()
+      .trim()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$|^$/, "Usá el formato HH:mm"),
+    estado: z.enum(ESTADOS_ASISTENCIA),
+    observaciones: opcional(300),
+  })
+  .refine((v) => !(v.horaSalida && !v.horaIngreso), {
+    message: "No puede haber salida sin entrada",
+    path: ["horaIngreso"],
+  })
+  .refine((v) => !v.horaIngreso || !v.horaSalida || v.horaSalida > v.horaIngreso, {
+    message: "La salida tiene que ser posterior a la entrada",
+    path: ["horaSalida"],
+  });
+
+export type DatosAjusteAsistencia = z.infer<typeof ajusteAsistenciaSchema>;
+
 // ─────────────────────────── Fichaje ───────────────────────────
 
 /**

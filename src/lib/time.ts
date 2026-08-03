@@ -61,6 +61,59 @@ export function horaLocal(
   return `${String(local.getHours()).padStart(2, "0")}:${String(local.getMinutes()).padStart(2, "0")}`;
 }
 
+/**
+ * Instante UTC de una hora local "HH:mm" en un día dado.
+ *
+ * Es la operación inversa de `horaLocal`, y hace falta cuando la dirección
+ * corrige un fichaje a mano: escribe "08:05" pensando en la hora del jardín,
+ * y lo que se guarda tiene que ser el instante UTC equivalente. Hacerlo con
+ * `new Date(...)` usaría la zona horaria de la computadora de quien corrige,
+ * que no tiene por qué ser la del jardín.
+ *
+ * `dia` viene de una columna `@db.Date`, cuya parte de fecha vive en UTC.
+ */
+export function instanteDesdeHoraLocal(
+  dia: Date,
+  hora: string,
+  zonaHoraria: string = ZONA_HORARIA_POR_DEFECTO,
+): Date | null {
+  const minutos = minutosDesdeMedianoche(hora);
+  if (minutos === null) return null;
+
+  const local = new TZDate(
+    dia.getUTCFullYear(),
+    dia.getUTCMonth(),
+    dia.getUTCDate(),
+    Math.floor(minutos / 60),
+    minutos % 60,
+    zonaHoraria,
+  );
+
+  return new Date(local.getTime());
+}
+
+/**
+ * Rango de un período "YYYY-MM", como [desde, hasta) sobre días calendario.
+ *
+ * El extremo derecho es exclusivo a propósito: comparar contra el día 1 del
+ * mes siguiente evita tener que saber si el mes tiene 28, 30 o 31 días.
+ */
+export function rangoDelPeriodo(
+  periodo: string,
+): { desde: Date; hasta: Date } | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(periodo.trim());
+  if (!m) return null;
+
+  const anio = Number(m[1]);
+  const mes = Number(m[2]);
+  if (mes < 1 || mes > 12) return null;
+
+  return {
+    desde: new Date(Date.UTC(anio, mes - 1, 1)),
+    hasta: new Date(Date.UTC(anio, mes, 1)),
+  };
+}
+
 /** Convierte "HH:mm" a minutos desde la medianoche. Devuelve null si no parsea. */
 export function minutosDesdeMedianoche(hora: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hora.trim());
