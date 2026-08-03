@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  experimental: {
+    // Los comprobantes de licencia viajan por una Server Action, y el tope por
+    // defecto es 1 MB: la foto de un certificado sacada con un celular lo pasa
+    // sola. Son hasta 3 archivos de 5 MB (ver TAMANIO_MAXIMO_COMPROBANTE),
+    // más el resto del formulario.
+    serverActions: {
+      bodySizeLimit: "16mb",
+    },
+  },
 };
 
 export default withSerwist(nextConfig);

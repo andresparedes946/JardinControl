@@ -107,6 +107,21 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   propia dueña y bastante a la de cualquier otra. Medido con dos rostros, los
   giros dejaban 0.01 de separación entre el peor caso legítimo y el mejor
   impostor; de frente, 0.34.
+- **La maestra manda el certificado; la dirección carga los días.** En
+  "Mis licencias" solo se adjunta el papel y, si hace falta, una aclaración:
+  no hay tipo ni fechas para completar. El período que cubre una licencia lo
+  dice el certificado, así que lo carga quien lo lee, al aprobarlo. Hasta
+  entonces la licencia figura como "certificado recibido el …", sin período.
+- **Aprobar una licencia escribe en las asistencias.** Los días laborales del
+  rango quedan en estado LICENCIA, salteando feriados; si no, aparecerían como
+  ausencias sin justificar en el historial y en la liquidación. Nunca se pisa
+  un día con ingreso fichado ni una fila corregida a mano, y pasar una
+  licencia aprobada a rechazada deshace la marca. Ver `src/lib/licencias.ts`.
+- **Los comprobantes no tienen URL pública.** Viven en un bucket privado y se
+  abren por `/api/comprobantes/[id]`, que comprueba quién pide —la dueña o la
+  dirección— y redirige a una URL firmada de un minuto. Es una ruta y no una
+  Server Action porque abrir una pestaña después de un `await` lo bloquea el
+  navegador.
 - **Las horas se calculan en UTC y se muestran en hora de Buenos Aires.**
   Ver `src/lib/time.ts`: mezclarlas corre un día los fichajes de la noche.
 - **La geocerca acepta cuando el círculo de incertidumbre del GPS se
@@ -133,8 +148,11 @@ reescribe la configuración entera.
 ## Estado
 
 Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
-contraseñas) y Fase 2 (registro facial). El detalle de las fases siguientes
-está en `EstructuraJardin.md` y en el plan de implementación.
+contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con reconocimiento
+facial y geocerca), Fase 4 (asistencias para la dirección y mi historial para
+la maestra) y Fase 5 (licencias: envío de certificados y resolución). Quedan
+sueldos, reportes y auditoría. El detalle está en `EstructuraJardin.md` y en
+el plan de implementación.
 
 El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
 rostros reales enrolados (`npm run rostros`):

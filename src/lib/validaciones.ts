@@ -219,6 +219,150 @@ export const fichajeSchema = z.object({
 
 export type DatosFichaje = z.infer<typeof fichajeSchema>;
 
+// ─────────────────────────── Licencias ───────────────────────────
+
+export const TIPOS_LICENCIA = [
+  "ENFERMEDAD",
+  "VACACIONES",
+  "ESTUDIO",
+  "PERSONAL",
+  "MATERNIDAD",
+  "OTRO",
+] as const;
+
+export const ETIQUETA_TIPO_LICENCIA: Record<
+  (typeof TIPOS_LICENCIA)[number],
+  string
+> = {
+  ENFERMEDAD: "Enfermedad",
+  VACACIONES: "Vacaciones",
+  ESTUDIO: "Estudio",
+  PERSONAL: "Personal",
+  MATERNIDAD: "Maternidad",
+  OTRO: "Otro",
+};
+
+/**
+ * Con qué tipo nace una licencia cuando la empleada solo manda el papel. La
+ * dirección lo confirma o lo cambia al revisarla; casi todos los certificados
+ * que llegan a un jardín son médicos.
+ */
+export const TIPO_LICENCIA_POR_DEFECTO = "ENFERMEDAD" as const;
+
+export const ESTADOS_LICENCIA = ["PENDIENTE", "APROBADA", "RECHAZADA"] as const;
+
+export const ETIQUETA_ESTADO_LICENCIA: Record<
+  (typeof ESTADOS_LICENCIA)[number],
+  string
+> = {
+  PENDIENTE: "Pendiente",
+  APROBADA: "Aprobada",
+  RECHAZADA: "Rechazada",
+};
+
+/** Tope de días de una licencia. Más que esto es un error de tipeo en la fecha. */
+export const DIAS_MAXIMOS_LICENCIA = 365;
+
+const fechaISO = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Elegí una fecha")
+  .refine((v) => !Number.isNaN(Date.parse(v)), "Fecha inválida");
+
+/**
+ * Lo que manda la empleada: el certificado y, si quiere, una aclaración.
+ *
+ * A propósito no pide tipo ni fechas. El período que cubre una licencia lo
+ * dice el papel, no la maestra desde el celular, y quien lo lee y lo carga es
+ * la dirección al revisarlo. Pedirle a la empleada que lo transcriba solo
+ * agrega un dato para discutir después.
+ */
+export const certificadoSchema = z.object({
+  detalle: opcional(500),
+});
+
+export type DatosCertificado = z.infer<typeof certificadoSchema>;
+
+/**
+ * Resolución de la dirección.
+ *
+ * Acá es donde se define de qué es la licencia y qué días cubre: al aprobar,
+ * ese rango es el que queda marcado en las asistencias. Rechazar exige un
+ * motivo, para que la empleada entienda qué le falta.
+ */
+export const revisionLicenciaSchema = z
+  .object({
+    estado: z.enum(["APROBADA", "RECHAZADA"]),
+    tipo: z.enum(TIPOS_LICENCIA),
+    fechaInicio: fechaISO,
+    fechaFin: fechaISO,
+    observaciones: opcional(300),
+  })
+  .refine((v) => v.fechaFin >= v.fechaInicio, {
+    message: "La fecha de fin no puede ser anterior a la de inicio",
+    path: ["fechaFin"],
+  })
+  .refine(
+    (v) =>
+      (Date.parse(v.fechaFin) - Date.parse(v.fechaInicio)) / 86_400_000 + 1 <=
+      DIAS_MAXIMOS_LICENCIA,
+    {
+      message: `Una licencia no puede durar más de ${DIAS_MAXIMOS_LICENCIA} días`,
+      path: ["fechaFin"],
+    },
+  )
+  .refine((v) => v.estado !== "RECHAZADA" || !!v.observaciones, {
+    message: "Escribí por qué se rechaza",
+    path: ["observaciones"],
+  });
+
+export type DatosRevisionLicencia = z.infer<typeof revisionLicenciaSchema>;
+
+export const filtrosLicenciasSchema = z.object({
+  estado: z.enum(ESTADOS_LICENCIA).optional(),
+  empleado: z.string().optional(),
+});
+
+export type FiltrosLicencias = z.infer<typeof filtrosLicenciasSchema>;
+
+// ─────────────────────────── Comprobantes ───────────────────────────
+
+/**
+ * Restricciones de los archivos adjuntos. Se repiten en el bucket de Supabase
+ * (ver `scripts/configurar-supabase.mjs`), pero se comprueban también acá: el
+ * bucket devuelve un error genérico y esto da un mensaje que se entiende.
+ */
+export const MIME_COMPROBANTES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
+export const TAMANIO_MAXIMO_COMPROBANTE = 5 * 1024 * 1024;
+export const COMPROBANTES_MAXIMOS = 3;
+
+/** Extensiones aceptadas por el `<input type="file">`. */
+export const ACCEPT_COMPROBANTES = ".pdf,.jpg,.jpeg,.png,.webp";
+
+export function problemaDelComprobante(archivo: {
+  type: string;
+  size: number;
+  name: string;
+}): string | null {
+  if (!MIME_COMPROBANTES.includes(archivo.type as (typeof MIME_COMPROBANTES)[number])) {
+    return `"${archivo.name}" no es un PDF ni una imagen.`;
+  }
+
+  if (archivo.size === 0) return `"${archivo.name}" está vacío.`;
+
+  if (archivo.size > TAMANIO_MAXIMO_COMPROBANTE) {
+    return `"${archivo.name}" pesa más de ${TAMANIO_MAXIMO_COMPROBANTE / 1024 / 1024} MB.`;
+  }
+
+  return null;
+}
+
 // ─────────────────────────── Configuración ───────────────────────────
 
 export const configuracionSchema = z.object({
