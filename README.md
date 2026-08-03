@@ -114,6 +114,19 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   imprecisas. Sin ese corte, un `accuracy` grande volvería la geocerca
   inútil. Ver `src/lib/geo.ts`.
 
+## Pendiente antes de usar esto en el jardín
+
+1. **La base está en estado de prueba.** La geocerca apunta a un domicilio
+   con radio de 100 m y `umbralAntispoof` está en 0.4. Se restaura al jardín
+   real con `npm run db:seed`, que reescribe la configuración entera.
+2. **Calibrar el antispoof.** Una maestra real en vivo puntuó 0.68 y el
+   umbral original era 0.70: habría rechazado un fichaje legítimo. Falta
+   medir cuánto puntúa un intento con una foto para poner el umbral entre
+   los dos valores. Ver `npm run fichajes`.
+3. **Probar el fichaje aceptado de punta a punta.** Lo único verificado con
+   cámara y GPS reales es el rechazo por ubicación. Entrada, salida, cálculo
+   de horas y jornada duplicada están escritos pero no ejercitados.
+
 ## Estado
 
 Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
