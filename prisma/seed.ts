@@ -24,10 +24,16 @@ const CONFIGURACION = {
   // Con un radio de 50 m conviene exigir buena señal: aceptar lecturas de
   // ±100 m volvería la geocerca casi decorativa.
   precisionMaximaMetros: 40,
-  // Escala normalizada de Human: 0.5 es el piso que su documentación da por
-  // coincidencia. Se recalibra con caras reales antes de habilitar el fichaje.
+  // Escala normalizada de Human. Contrastado con dos rostros reales: una
+  // persona contra su propia muestra frontal da entre 0.54 y 0.93, y el
+  // máximo entre personas distintas fue 0.19. Ver `npm run rostros`.
   similitudMinima: 0.5,
   umbralLiveness: 0.7,
+  // OJO: sin calibrar, y se sabe que está de más. Una maestra real en vivo
+  // midió 0.68 con este umbral en 0.70, o sea que la habría rechazado por
+  // "parece una foto". Falta medir cuánto puntúa un intento con una foto
+  // para poder ponerlo entre los dos valores; hasta entonces, bajarlo a ojo
+  // solo cambia un error por el otro. Ver `npm run fichajes`.
   umbralAntispoof: 0.7,
   diasLaborales: [1, 2, 3, 4, 5],
   zonaHoraria: "America/Argentina/Buenos_Aires",

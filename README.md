@@ -116,16 +116,19 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
 
 ## Pendiente antes de usar esto en el jardín
 
-1. **La base está en estado de prueba.** La geocerca apunta a un domicilio
-   con radio de 100 m y `umbralAntispoof` está en 0.4. Se restaura al jardín
-   real con `npm run db:seed`, que reescribe la configuración entera.
-2. **Calibrar el antispoof.** Una maestra real en vivo puntuó 0.68 y el
-   umbral original era 0.70: habría rechazado un fichaje legítimo. Falta
-   medir cuánto puntúa un intento con una foto para poner el umbral entre
-   los dos valores. Ver `npm run fichajes`.
-3. **Probar el fichaje aceptado de punta a punta.** Lo único verificado con
+1. **Calibrar el antispoof.** Es lo más urgente: una maestra real en vivo
+   puntuó 0.68 contra un umbral de 0.70, así que hoy el sistema rechazaría
+   un fichaje legítimo por "parece una foto". Falta medir cuánto puntúa un
+   intento con una foto para poner el umbral entre los dos valores; bajarlo
+   a ojo solo cambia un error por el otro. Ver `npm run fichajes`.
+2. **Probar el fichaje aceptado de punta a punta.** Lo único verificado con
    cámara y GPS reales es el rechazo por ubicación. Entrada, salida, cálculo
    de horas y jornada duplicada están escritos pero no ejercitados.
+
+Para probar los dos puntos hace falta estar dentro de la geocerca. Fuera del
+jardín, lo práctico es mover el centro a donde uno esté (Configuración →
+"Usar mi ubicación actual") y restaurarlo después con `npm run db:seed`, que
+reescribe la configuración entera.
 
 ## Estado
 
