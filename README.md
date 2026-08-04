@@ -1,9 +1,11 @@
 # JardinControl
 
 Sistema de gestión de personal del jardín **Mundo Feliz**: fichaje de ingreso
-y egreso con reconocimiento facial restringido al radio del jardín, cálculo de
-horas y sueldos, licencias y carga de comprobantes. Es una PWA instalable,
-pensada para que cada empleada fiche desde su propio celular.
+y egreso escaneando un código QR, restringido al radio del jardín, más cálculo
+de horas y sueldos, licencias y comprobantes. Es una PWA instalable.
+
+**Solo la dirección tiene cuenta.** Las maestras no inician sesión: escanean
+el código que está en la entrada, escriben su DNI y su PIN, y listo.
 
 ## Stack
 
@@ -14,7 +16,7 @@ pensada para que cada empleada fiche desde su propio celular.
 | Datos | Prisma 7 + PostgreSQL (Supabase) |
 | Auth | Auth.js v5, credenciales + bcrypt, sesión JWT |
 | Archivos | Supabase Storage (bucket privado + signed URLs) |
-| Facial | `@vladmandic/human` (embedding + antispoof + liveness) |
+| Fichaje | QR con token del día + DNI y PIN + geocerca por GPS |
 | PWA | `@serwist/next` |
 
 ## Puesta en marcha
@@ -40,10 +42,11 @@ npm run dev
 
 ### Probar en un celular
 
-La cámara y el GPS **solo funcionan sobre HTTPS**: apuntar el teléfono a la IP
-de LAN por `http://` no alcanza, el navegador bloquea la cámara sin decir por
-qué. Con `npm run dev:https` el servidor levanta sobre TLS con un certificado
-propio, que hay que generar una vez con la IP de esta máquina:
+El GPS **solo funciona sobre HTTPS**: apuntar el teléfono a la IP de LAN por
+`http://` no alcanza, el navegador bloquea la geolocalización sin decir por
+qué, y sin ubicación no hay fichaje. Con `npm run dev:https` el servidor
+levanta sobre TLS con un certificado propio, que hay que generar una vez con
+la IP de esta máquina:
 
 ```bash
 openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
@@ -67,14 +70,15 @@ New-NetFirewallRule -DisplayName "JardinControl dev 3000" -Direction Inbound -Ac
 Desde el teléfono, en la misma red, entrar a `https://<IP-de-la-PC>:3000` y
 aceptar la advertencia de certificado (Configuración avanzada → Acceder al
 sitio). Chrome sigue considerando la página contexto seguro y habilita la
-cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
+geolocalización. `/certificates` está en `.gitignore`: la clave privada no va
+al repo.
 
 ## Comandos
 
 | Comando | Qué hace |
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
-| `npm run dev:https` | Igual, sobre TLS y abierto a la red, para probar cámara y GPS en un celular |
+| `npm run dev:https` | Igual, sobre TLS y abierto a la red, para probar el GPS en un celular |
 | `npm run build` | Genera el cliente Prisma y compila |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
@@ -83,14 +87,13 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
 | `npm run db:studio` | Prisma Studio |
 | `npm run limpiar` | Cuenta los movimientos de prueba; con `-- --si` los borra |
 | `npm run iconos` | Regenera los íconos de la PWA |
-| `npm run modelos` | Vuelve a bajar los modelos de reconocimiento facial a `public/models` |
-| `npm run rostros` | Mide los enrolamientos guardados, para calibrar los umbrales con datos |
+| `npm run fichajes` | Muestra los últimos intentos de fichaje con su resultado |
 
 ## Puesta en producción (Vercel)
 
 Vercel resuelve lo que en desarrollo cuesta: sirve la app por HTTPS en un
-dominio real, y la cámara y el GPS solo funcionan en contexto seguro. Con eso
-se termina el certificado autofirmado y la advertencia en cada teléfono.
+dominio real, y el GPS solo funciona en contexto seguro. Con eso se termina el
+certificado autofirmado y la advertencia en cada teléfono.
 
 1. **Importar el repo** desde el panel de Vercel. Se detecta Next.js solo; no
    hay que tocar el comando de build ni el directorio de salida.
@@ -119,7 +122,7 @@ se termina el certificado autofirmado y la advertencia en cada teléfono.
 
 5. **Limpiar los datos de prueba** con `npm run limpiar -- --si`, que borra
    fichajes, asistencias, licencias con sus archivos, liquidaciones y
-   auditoría, y deja el padrón, los rostros enrolados y la configuración.
+   auditoría, y deja el padrón, los PIN y la configuración.
 
 6. **Verificar la geocerca** en Configuración: si se movió el centro para
    probar fuera del jardín, hay que devolverlo. `npm run db:seed` reescribe la
@@ -133,31 +136,40 @@ publicar.
 
 ## Decisiones que conviene conocer
 
-- **La decisión del fichaje vive en el servidor.** El navegador calcula el
-  descriptor facial y lee el GPS, pero quién compara, quién mide la distancia
-  y quién resuelve si es ingreso o egreso es siempre el backend. Todo intento
-  queda registrado en la tabla `fichajes`, incluidos los rechazados, con la
-  distancia y la precisión que reportó el dispositivo.
-- **Solo se guardan vectores faciales, nunca fotos.** Las capturas del
-  enrolamiento se descartan apenas se calcula el embedding.
-- **Los modelos se sirven desde `public/models`, no desde el CDN del autor.**
-  Están versionados en el repo (unos 10 MB) para que el fichaje no dependa de
-  un tercero ni de una descarga en el momento. `npm run modelos` los rebaja.
-- **`@vladmandic/human` está en `serverExternalPackages`.** Su `exports` mapea
-  la condición `node` a un build que importa `@tensorflow/tfjs-node`, y sin
-  eso el bundler del servidor lo resuelve y falla. Se usa únicamente desde el
-  navegador, cargado con `next/dynamic` y `ssr: false`.
-- **Al enrolar, la cara va siempre de frente.** Parece intuitivo pedir giros
-  para juntar variedad de pose, y es peor: una cara de tres cuartos lleva
-  menos información de identidad, así que se parece poco a la frontal de su
-  propia dueña y bastante a la de cualquier otra. Medido con dos rostros, los
-  giros dejaban 0.01 de separación entre el peor caso legítimo y el mejor
-  impostor; de frente, 0.34.
-- **La maestra manda el certificado; la dirección carga los días.** En
-  "Mis licencias" solo se adjunta el papel y, si hace falta, una aclaración:
-  no hay tipo ni fechas para completar. El período que cubre una licencia lo
-  dice el certificado, así que lo carga quien lo lee, al aprobarlo. Hasta
-  entonces la licencia figura como "certificado recibido el …", sin período.
+- **La decisión del fichaje vive en el servidor.** El navegador lee el GPS,
+  pero quién valida el código, quién compara el PIN, quién mide la distancia y
+  quién resuelve si es ingreso o egreso es siempre el backend. Todo intento
+  identificado queda registrado en la tabla `fichajes`, incluidos los
+  rechazados, con la distancia y la precisión que reportó el dispositivo.
+- **La identidad la sostienen tres cosas y ninguna alcanza sola.** El código
+  del día prueba que alguien estuvo frente al cartel de la entrada, el PIN
+  prueba quién es, y la geocerca prueba dónde está. Sacar cualquiera de las
+  tres deja el fichaje abierto: sin código se ficha con un enlace guardado, sin
+  PIN se ficha por otra sabiendo su DNI, sin geocerca se ficha desde casa.
+- **Hay un solo código vigente por vez y vale el día en que se generó.** Al
+  día siguiente deja de servir solo, sin que nadie tenga que acordarse de nada,
+  y la dirección puede regenerarlo cuando quiera —si alguien fotografió el
+  cartel— con lo que el anterior muere en el acto. Es un valor aleatorio en la
+  base y no un token firmado: así regenerarlo alcanza para invalidar todo lo
+  anterior, sin llevar una lista de revocados.
+- **Esto no impide que una maestra fiche por otra.** Con el PIN prestado o el
+  teléfono en la mano de otra persona, el sistema no tiene cómo notarlo: es el
+  mismo hueco que tiene cualquier reloj de entrada con tarjeta. Fue una
+  decisión, no un olvido — la alternativa era el reconocimiento facial, que se
+  probó y se sacó. Lo que sí queda es rastro: cada intento guarda IP,
+  dispositivo y coordenadas.
+- **El fichaje era por reconocimiento facial y se sacó.** En la prueba real en
+  el jardín, 6 de cada 8 intentos de una persona de verdad terminaron
+  rechazados: el umbral de antispoof caía justo en el medio de los valores que
+  produce una cara legítima. Calibrarlo exigía medir cuánto puntúa una foto, y
+  aun así quedaba el problema de fondo: guardar vectores faciales de las
+  empleadas es tratar datos biométricos, con todo lo que implica. Los 20
+  descriptores enrolados se borraron con la tabla.
+- **El certificado lo carga la dirección.** Las maestras no tienen cuenta, así
+  que el papel llega en mano o por mensaje y lo sube quien lo recibe, eligiendo
+  de quién es. El período que cubre lo dice el certificado, así que se carga al
+  aprobarlo: hasta entonces la licencia figura como "certificado recibido el
+  …", sin período.
 - **Aprobar una licencia escribe en las asistencias.** Los días laborales del
   rango quedan en estado LICENCIA, salteando feriados; si no, aparecerían como
   ausencias sin justificar en el historial y en la liquidación. Nunca se pisa
@@ -240,43 +252,34 @@ publicar.
 
 ## Pendiente antes de usar esto en el jardín
 
-1. **Calibrar el antispoof.** Es lo más urgente: una maestra real en vivo
-   puntuó 0.68 contra un umbral de 0.70, así que hoy el sistema rechazaría
-   un fichaje legítimo por "parece una foto". Falta medir cuánto puntúa un
-   intento con una foto para poner el umbral entre los dos valores; bajarlo
-   a ojo solo cambia un error por el otro. Ver `npm run fichajes`.
-2. **Probar el fichaje aceptado de punta a punta.** Lo único verificado con
-   cámara y GPS reales es el rechazo por ubicación. Entrada, salida, cálculo
-   de horas y jornada duplicada están escritos pero no ejercitados.
+1. **Asignar los PIN.** Cada empleada necesita el suyo: Empleados → menú de la
+   fila → "Asignar PIN de fichaje". Se muestra una sola vez, así que hay que
+   anotarlo o dictarlo en ese momento. Sin PIN no se puede fichar.
+2. **Verificar la geocerca** en Configuración, que el centro esté sobre el
+   jardín y no sobre donde se probó, y revisar el radio.
+3. **Probar un fichaje real desde un celular**, parado en el jardín. El
+   circuito está verificado de punta a punta con el GPS simulado —entrada
+   aceptada, PIN incorrecto, jornada duplicada y fuera del radio—, pero el GPS
+   de un teléfono real en la vereda es lo único que no se puede simular.
 
-Para probar los dos puntos hace falta estar dentro de la geocerca. Fuera del
-jardín, lo práctico es mover el centro a donde uno esté (Configuración →
-"Usar mi ubicación actual") y restaurarlo después con `npm run db:seed`, que
-reescribe la configuración entera.
+Para el punto 3 hace falta estar dentro de la geocerca. Fuera del jardín, lo
+práctico es mover el centro a donde uno esté (Configuración → "Usar mi
+ubicación actual") y restaurarlo después con `npm run db:seed`, que reescribe
+la configuración entera.
 
 ## Estado
 
-Todas las fases están terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados,
-configuración y contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con
-reconocimiento facial y geocerca), Fase 4 (asistencias para la dirección y mi
-historial para la maestra), Fase 5 (licencias: envío de certificados y
-resolución), Fase 6 (liquidación mensual de sueldos), Fase 7 (dashboard con
-indicadores reales), Fase 8 (reportes exportables de asistencias, sueldos y
-licencias) y Fase 9 (pantalla de auditoría). El detalle está en
-`EstructuraJardin.md` y en el plan de implementación.
+Las nueve fases del plan original están terminadas: andamiaje, ABM de
+empleados, fichaje, asistencias, licencias, liquidación de sueldos, dashboard,
+reportes y auditoría. El detalle está en `EstructuraJardin.md`.
 
-Lo que sigue no es una fase más sino la prueba en el jardín: los dos puntos
-pendientes de abajo necesitan cámara, GPS y estar parado dentro de la geocerca.
+Después el modelo cambió: **el fichaje pasó de reconocimiento facial a código
+QR con DNI y PIN**, y con eso las maestras dejaron de tener cuenta. Lo que se
+fue, y por qué, está arriba en "Decisiones". Lo que quedó:
 
-El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
-rostros reales enrolados (`npm run rostros`):
-
-| | similitud |
+| | |
 |---|---|
-| Misma persona, contra su muestra frontal | 0.54 – 0.93 |
-| Personas distintas, máximo cruzado | 0.19 |
-
-Son dos personas, no una muestra estadística. La prueba de verdad llega con
-el fichaje: la tabla `fichajes` guarda el `score_facial` de **todo** intento,
-aceptado o rechazado, justamente para poder ajustar el umbral con intentos
-reales en vez de suposiciones.
+| Inician sesión | Solo la dirección |
+| Fichan | Todas, escaneando el QR de la entrada |
+| Suben certificados | Solo la dirección |
+| Datos biométricos | Ninguno |
