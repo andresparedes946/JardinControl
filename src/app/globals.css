@@ -7,9 +7,14 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* El layout carga Geist bajo `--font-geist-sans`. Acá decía
+     `--font-sans: var(--font-sans)`, que se define a sí misma: no resuelve a
+     nada y toda la app venía cayendo en el serif por defecto del navegador.
+     Se veía en cualquier pantalla, pero como el serif de sistema es legible,
+     pasaba por decisión de diseño en vez de por error. */
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -60,7 +65,13 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Sube de 0.556 a 0.48: contra el blanco pasa de 4.7:1 a 6.5:1. El valor
+     que traía shadcn apenas cumplía el mínimo AA, y buena parte de la app lo
+     usa en 12 px —salas, horarios, detalles de auditoría—, donde ese mínimo
+     se lee bien en una pantalla nueva y mal en el monitor de una oficina.
+     Sigue estando muy por encima del texto principal, así que la jerarquía
+     entre lo importante y lo secundario no se pierde. */
+  --muted-foreground: oklch(0.48 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -95,7 +106,9 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  /* Lo mismo del lado oscuro: 0.708 → 0.76 lleva el contraste sobre la
+     tarjeta de 6.9:1 a 8.3:1. */
+  --muted-foreground: oklch(0.76 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -123,9 +136,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Geist es variable, así que 450 existe de verdad y no lo simula el
+       navegador engordando el trazo. Es medio escalón sobre el normal: se lee
+       más firme sin llegar al medium, que en párrafos largos pesa. Lo que ya
+       pide font-medium o font-semibold no se toca. */
+    font-weight: 450;
   }
   html {
     @apply font-sans;
+    /* Un 6% más grande, en porcentaje y no en px: quien tenga configurada una
+       letra grande en el navegador conserva su preferencia y la escala se
+       aplica encima. Tailwind mide en rem, así que el texto y el espaciado
+       crecen juntos y ninguna proporción se rompe. */
+    font-size: 106.25%;
   }
 }
 /**

@@ -49,10 +49,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es-AR" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    // Las variables de las fuentes van en <html> y no en <body>: la regla que
+    // aplica la tipografía vive en `html` (ver globals.css), y una variable
+    // definida en el body no llega hasta ahí. Las custom properties heredan
+    // hacia abajo, nunca hacia arriba.
+    <html
+      lang="es-AR"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased">
         <Proveedores>{children}</Proveedores>
       </body>
     </html>
