@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { nombreDePeriodo } from "@/lib/time";
 import {
   ESTADOS_ASISTENCIA,
   ETIQUETA_ESTADO_ASISTENCIA,
@@ -24,17 +25,6 @@ type Props = {
   empleadas: { id: string; nombre: string }[];
   salas: { id: string; nombre: string }[];
 };
-
-/** "2026-08" → "agosto 2026". */
-export function nombreDePeriodo(periodo: string): string {
-  const [anio, mes] = periodo.split("-").map(Number);
-  const fecha = new Date(Date.UTC(anio, mes - 1, 1));
-  return new Intl.DateTimeFormat("es-AR", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(fecha);
-}
 
 export function FiltrosAsistencias({
   periodos,

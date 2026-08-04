@@ -117,6 +117,19 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   ausencias sin justificar en el historial y en la liquidación. Nunca se pisa
   un día con ingreso fichado ni una fila corregida a mano, y pasar una
   licencia aprobada a rechazada deshace la marca. Ver `src/lib/licencias.ts`.
+- **Un día de licencia aprobada se paga a las horas del turno.** Si no, una
+  maestra con certificado médico cobraría cero por esos días. En la
+  liquidación las horas de licencia van en una columna aparte de las
+  trabajadas, y la fila de `liquidaciones` guarda las dos por separado, para
+  que el importe pueda explicarse. Ver `src/lib/sueldos.ts`.
+- **La liquidación se congela a mano y no se recalcula sola.** Generar el mes
+  copia el valor hora a cada fila: un aumento en septiembre no cambia lo que
+  se pagó en agosto. Si después se corrige una asistencia, la pantalla avisa
+  que la liquidación quedó desfasada, pero no la toca: pisar un importe ya
+  pagado tiene que ser una decisión, no un efecto secundario.
+- **Los importes se calculan en centavos con enteros.** En pesos con coma
+  flotante quedan restos de centavo, y entonces el total del mes no da la
+  suma de la columna. Ver `importe()` en `src/lib/sueldos.ts`.
 - **Los comprobantes no tienen URL pública.** Viven en un bucket privado y se
   abren por `/api/comprobantes/[id]`, que comprueba quién pide —la dueña o la
   dirección— y redirige a una URL firmada de un minuto. Es una ruta y no una
@@ -150,9 +163,10 @@ reescribe la configuración entera.
 Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
 contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con reconocimiento
 facial y geocerca), Fase 4 (asistencias para la dirección y mi historial para
-la maestra) y Fase 5 (licencias: envío de certificados y resolución). Quedan
-sueldos, reportes y auditoría. El detalle está en `EstructuraJardin.md` y en
-el plan de implementación.
+la maestra), Fase 5 (licencias: envío de certificados y resolución) y Fase 6
+(liquidación mensual de sueldos). Quedan el dashboard con indicadores, los
+reportes y la pantalla de auditoría. El detalle está en `EstructuraJardin.md`
+y en el plan de implementación.
 
 El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
 rostros reales enrolados (`npm run rostros`):

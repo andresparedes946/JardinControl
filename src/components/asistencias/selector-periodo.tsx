@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { nombreDePeriodo } from "@/components/asistencias/filtros-asistencias";
 import {
   Select,
   SelectContent,
@@ -10,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { nombreDePeriodo } from "@/lib/time";
 
 /** Selector de mes suelto, para las pantallas que no tienen más filtros. */
 export function SelectorPeriodo({

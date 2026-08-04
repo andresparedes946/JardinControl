@@ -150,6 +150,9 @@ const periodoYYYYMM = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Período inválido");
 
+/** Período "YYYY-MM" suelto, para las acciones que reciben solo eso. */
+export const periodoSchema = periodoYYYYMM;
+
 export const filtrosAsistenciasSchema = z.object({
   periodo: periodoYYYYMM.optional(),
   empleado: z.string().optional(),

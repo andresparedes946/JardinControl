@@ -145,6 +145,22 @@ export function minutosDeTardanza(
   return Math.max(0, llegada - inicio - toleranciaMinutos);
 }
 
+/**
+ * Nombre del período para pantalla: "2026-08" → "agosto 2026".
+ *
+ * Vive acá y no en el componente de filtros porque también lo usan pages de
+ * servidor, y una función exportada desde un módulo "use client" no se puede
+ * llamar del lado del servidor.
+ */
+export function nombreDePeriodo(periodo: string): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-AR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(anio, mes - 1, 1)));
+}
+
 /** Formatea una cantidad de minutos como "5:04" (horas:minutos). */
 export function formatearHoras(minutos: number): string {
   const signo = minutos < 0 ? "-" : "";

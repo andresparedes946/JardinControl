@@ -305,7 +305,11 @@ model Liquidacion {
   empleadoId        String   @map("empleado_id")
   /// Período en formato "YYYY-MM".
   periodo           String   @db.VarChar(7)
+  /// Minutos efectivamente fichados en el mes.
   minutosTrabajados Int      @map("minutos_trabajados")
+  /// Minutos de licencia aprobada, liquidados al horario del turno. Van
+  /// aparte para que la liquidación pueda explicar de dónde sale el total.
+  minutosLicencia   Int      @default(0) @map("minutos_licencia")
   valorHora         Decimal  @map("valor_hora") @db.Decimal(10, 2)
   total             Decimal  @db.Decimal(12, 2)
   generadaEn        DateTime @default(now()) @map("generada_en")
