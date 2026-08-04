@@ -114,6 +114,36 @@ export function rangoDelPeriodo(
   };
 }
 
+/**
+ * El mismo rango, pero como instantes, para filtrar columnas `DateTime`.
+ *
+ * `rangoDelPeriodo` sirve tal cual para las columnas `@db.Date`, cuyo día ya
+ * viene expresado en UTC. Una marca de tiempo no: agosto en Buenos Aires
+ * empieza a las 03:00 UTC del 1, así que comparar contra la medianoche UTC
+ * mete en agosto las tres últimas horas del 31 de julio.
+ */
+export function rangoDelPeriodoEnInstantes(
+  periodo: string,
+  zonaHoraria: string = ZONA_HORARIA_POR_DEFECTO,
+): { desde: Date; hasta: Date } | null {
+  const rango = rangoDelPeriodo(periodo);
+  if (!rango) return null;
+
+  const desde = instanteDesdeHoraLocal(rango.desde, "00:00", zonaHoraria);
+  const hasta = instanteDesdeHoraLocal(rango.hasta, "00:00", zonaHoraria);
+  if (!desde || !hasta) return null;
+
+  return { desde, hasta };
+}
+
+/** Período "YYYY-MM" siguiente al dado. */
+export function periodoSiguiente(periodo: string): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  return mes >= 12
+    ? `${anio + 1}-01`
+    : `${anio}-${String(mes + 1).padStart(2, "0")}`;
+}
+
 /** Convierte "HH:mm" a minutos desde la medianoche. Devuelve null si no parsea. */
 export function minutosDesdeMedianoche(hora: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hora.trim());

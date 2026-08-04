@@ -3,6 +3,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
+import { registrarAuditoria } from "@/lib/auditoria";
 import { authConfig } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 
@@ -45,7 +46,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           "$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidiu";
         const coincide = await compare(parseado.data.password, hash);
 
-        if (!usuario || !usuario.activo || !coincide) return null;
+        // El acceso se audita de los dos lados. Un registro que solo guarda lo
+        // que salió bien no sirve para lo que se consulta una auditoría: una
+        // seguidilla de intentos fallidos a las tres de la mañana es
+        // exactamente el rastro que hay que poder ver. El motivo se guarda
+        // porque quien lo lee ya es la dirección; al que intenta entrar se le
+        // sigue devolviendo el mismo error genérico.
+        if (!usuario || !usuario.activo || !coincide) {
+          await registrarAuditoria({
+            usuarioId: usuario?.id ?? null,
+            accion: "LOGIN_FALLIDO",
+            entidad: "Usuario",
+            entidadId: usuario?.id ?? null,
+            detalle: {
+              email: parseado.data.email,
+              motivo: !usuario
+                ? "email inexistente"
+                : !usuario.activo
+                  ? "usuario inactivo"
+                  : "contraseña incorrecta",
+            },
+          });
+
+          return null;
+        }
+
+        await registrarAuditoria({
+          usuarioId: usuario.id,
+          accion: "INICIAR_SESION",
+          entidad: "Usuario",
+          entidadId: usuario.id,
+        });
 
         return {
           id: usuario.id,

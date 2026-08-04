@@ -398,6 +398,77 @@ export const filtrosReporteSchema = z.object({
 
 export type FiltrosReporte = z.infer<typeof filtrosReporteSchema>;
 
+// ─────────────────────────── Auditoría ───────────────────────────
+
+/**
+ * Cómo se lee cada acción en pantalla.
+ *
+ * La columna `accion` es texto libre a propósito: el registro no puede quedar
+ * sujeto a una migración cada vez que aparece una operación nueva. Este mapa
+ * es solo para mostrarla en castellano y para poblar el filtro; una acción que
+ * no figure acá se muestra igual, con su nombre crudo.
+ */
+export const ETIQUETA_ACCION_AUDITORIA: Record<string, string> = {
+  INICIAR_SESION: "Inició sesión",
+  LOGIN_FALLIDO: "Intento de acceso fallido",
+  CREAR: "Creó",
+  ACTUALIZAR: "Modificó",
+  ELIMINAR: "Eliminó",
+  DAR_DE_BAJA: "Dio de baja",
+  REACTIVAR: "Reactivó",
+  RESTABLECER_PASSWORD: "Restableció la contraseña",
+  CAMBIAR_PASSWORD: "Cambió su contraseña",
+  ENROLAR_ROSTRO: "Registró el rostro",
+  REENROLAR_ROSTRO: "Volvió a registrar el rostro",
+  BORRAR_ROSTRO: "Borró el rostro",
+  AJUSTAR_ASISTENCIA: "Corrigió una jornada",
+  SUBIR_CERTIFICADO: "Envió un certificado",
+  // Ya no se produce: la maestra manda el certificado y la dirección carga el
+  // período al aprobarlo. Se traduce igual porque las filas viejas siguen ahí,
+  // que es justamente lo que una auditoría existe para poder leer.
+  SOLICITAR_LICENCIA: "Solicitó una licencia",
+  ADJUNTAR_COMPROBANTE: "Adjuntó un comprobante",
+  CANCELAR_LICENCIA: "Canceló una licencia",
+  APROBAR_LICENCIA: "Aprobó una licencia",
+  RECHAZAR_LICENCIA: "Rechazó una licencia",
+  GENERAR_LIQUIDACION: "Generó la liquidación",
+  EXPORTAR_REPORTE: "Exportó un reporte",
+};
+
+export const ETIQUETA_ENTIDAD_AUDITORIA: Record<string, string> = {
+  Usuario: "Usuario",
+  Empleado: "Empleada",
+  Asistencia: "Asistencia",
+  Licencia: "Licencia",
+  Liquidacion: "Liquidación",
+  Reporte: "Reporte",
+  Configuracion: "Configuración",
+  Horario: "Horario",
+  Sala: "Sala",
+};
+
+/** Traduce una acción o una entidad, cayendo al valor crudo si no está mapeada. */
+export function etiquetaDeAuditoria(
+  mapa: Record<string, string>,
+  valor: string,
+): string {
+  return mapa[valor] ?? valor;
+}
+
+export const filtrosAuditoriaSchema = z.object({
+  periodo: periodoYYYYMM.optional(),
+  usuario: z.string().optional(),
+  // Se aceptan como texto por lo mismo que la columna lo es: restringirlas a
+  // un enum dejaría sin filtro a cualquier acción agregada después.
+  accion: z.string().trim().max(50).optional(),
+  entidad: z.string().trim().max(50).optional(),
+  pagina: z.coerce.number().int().min(1).default(1),
+});
+
+export type FiltrosAuditoria = z.infer<typeof filtrosAuditoriaSchema> & {
+  periodo: string;
+};
+
 // ─────────────────────────── Configuración ───────────────────────────
 
 export const configuracionSchema = z.object({

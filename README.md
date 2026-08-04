@@ -160,6 +160,24 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   dirección— y redirige a una URL firmada de un minuto. Es una ruta y no una
   Server Action porque abrir una pestaña después de un `await` lo bloquea el
   navegador.
+- **La auditoría se escribió desde la Fase 1 y se pudo mirar en la Fase 9.**
+  Es el orden que conviene: sumar la línea de registro mientras se escribe
+  cada mutación no cuesta nada, y hacerlo al final obliga a repasarlas todas.
+- **El acceso se audita también cuando falla.** Un registro que solo guarda lo
+  que salió bien no sirve para lo que se consulta una auditoría: una seguidilla
+  de intentos fallidos de madrugada es justamente el rastro que hay que poder
+  ver. Queda el email tipeado y el motivo —email inexistente, cuenta inactiva,
+  contraseña incorrecta— porque quien lo lee es la dirección; al que intenta
+  entrar se le sigue devolviendo el mismo mensaje genérico de siempre.
+- **`accion` es texto libre y la traducción vive en un mapa.** Una acción sin
+  traducir se muestra con su nombre crudo en vez de romper la pantalla, y el
+  mapa conserva las que ya no se producen —`SOLICITAR_LICENCIA`, de antes de
+  que el circuito de licencias cambiara— porque las filas viejas siguen ahí y
+  poder leerlas es para lo que existe el registro.
+- **El sistema operativo no tiene columna: se deriva al mostrar.** Sale del
+  `user_agent` que ya se guarda. Agregar la columna solo serviría de acá en
+  adelante y dejaría en blanco todo lo registrado desde la Fase 1, que es
+  precisamente lo que se va a consultar.
 - **Las horas se calculan en UTC y se muestran en hora de Buenos Aires.**
   Ver `src/lib/time.ts`: mezclarlas corre un día los fichajes de la noche.
 - **La geocerca acepta cuando el círculo de incertidumbre del GPS se
@@ -185,15 +203,17 @@ reescribe la configuración entera.
 
 ## Estado
 
-Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
-contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con reconocimiento
-facial y geocerca), Fase 4 (asistencias para la dirección y mi historial para
-la maestra), Fase 5 (licencias: envío de certificados y resolución), Fase 6
-(liquidación mensual de sueldos), Fase 7 (dashboard con indicadores reales) y
-Fase 8 (reportes exportables de asistencias, sueldos y licencias). Queda la
-pantalla de auditoría: las escrituras se registran desde la Fase 1, falta la
-vista para consultarlas. El detalle está en `EstructuraJardin.md` y en el plan
-de implementación.
+Todas las fases están terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados,
+configuración y contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con
+reconocimiento facial y geocerca), Fase 4 (asistencias para la dirección y mi
+historial para la maestra), Fase 5 (licencias: envío de certificados y
+resolución), Fase 6 (liquidación mensual de sueldos), Fase 7 (dashboard con
+indicadores reales), Fase 8 (reportes exportables de asistencias, sueldos y
+licencias) y Fase 9 (pantalla de auditoría). El detalle está en
+`EstructuraJardin.md` y en el plan de implementación.
+
+Lo que sigue no es una fase más sino la prueba en el jardín: los dos puntos
+pendientes de abajo necesitan cámara, GPS y estar parado dentro de la geocerca.
 
 El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
 rostros reales enrolados (`npm run rostros`):
