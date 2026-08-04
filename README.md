@@ -160,6 +160,13 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   dirección— y redirige a una URL firmada de un minuto. Es una ruta y no una
   Server Action porque abrir una pestaña después de un `await` lo bloquea el
   navegador.
+- **La auditoría se ve como tabla o como tarjetas según el ancho.** Cinco
+  columnas no entran en un celular por más que se les recorte contenido, y
+  arrastrar de costado para leer cada fila no es leer. Debajo de 1024 px va la
+  misma información apilada; de ahí para arriba, la tabla, que es lo que sirve
+  para barrer veinticinco filas de un vistazo. El corte está en `lg` y no en
+  `md` porque entre 768 y 1024 px la tabla entra, pero le come el ancho a la
+  columna del detalle hasta dejarlo en tres renglones: cabe y se lee peor.
 - **La auditoría se escribió desde la Fase 1 y se pudo mirar en la Fase 9.**
   Es el orden que conviene: sumar la línea de registro mientras se escribe
   cada mutación no cuesta nada, y hacerlo al final obliga a repasarlas todas.
