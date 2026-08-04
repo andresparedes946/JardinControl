@@ -15,7 +15,7 @@ export default async function LayoutApp({
       <BarraLateral rol={rol} nombre={name ?? ""} email={email ?? ""} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex justify-end p-2 md:p-3">
+        <div className="no-imprimir flex justify-end p-2 md:p-3">
           <CambiarTema />
         </div>
         <main className="min-w-0 flex-1 p-4 pt-0 md:p-6 md:pt-0">

@@ -117,6 +117,21 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   ausencias sin justificar en el historial y en la liquidación. Nunca se pisa
   un día con ingreso fichado ni una fila corregida a mano, y pasar una
   licencia aprobada a rechazada deshace la marca. Ver `src/lib/licencias.ts`.
+- **El reporte que se ve es el que se baja.** La vista previa y el CSV salen
+  del mismo objeto, con las filas ya formateadas como texto: no hay una
+  consulta para la pantalla y otra para el archivo. Es la única forma de que
+  el papel que se firma no diga algo distinto de lo que la dirección miró
+  antes de apretar "descargar". Ver `src/lib/reportes.ts`.
+- **El CSV va con punto y coma y con BOM.** Excel en configuración regional
+  argentina usa la coma como separador decimal, así que un CSV separado por
+  comas le entra todo en una sola columna; y sin el BOM lee el archivo como
+  ANSI y "Corbalán" sale "CorbalÃ¡n". Las dos cosas se ven como manías hasta
+  que alguien hace doble clic en el archivo.
+- **El PDF se hace imprimiendo.** No hay librería de PDF: hay una hoja de
+  estilos de impresión que saca la barra lateral, los filtros y el tema
+  oscuro, y agrega un encabezado con el nombre del jardín y el período.
+  "Guardar como PDF" del navegador hace el resto. Una dependencia para
+  generar PDFs pesa más que el problema que resuelve.
 - **No fichar todavía no es faltar.** A las 8 de la mañana ninguna maestra del
   turno tarde llegó tarde: su turno no empezó. El dashboard separa "sin fichar"
   (ya pasó su horario más la tolerancia) de "no empezó", porque contarlas todas
@@ -174,9 +189,11 @@ Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
 contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con reconocimiento
 facial y geocerca), Fase 4 (asistencias para la dirección y mi historial para
 la maestra), Fase 5 (licencias: envío de certificados y resolución), Fase 6
-(liquidación mensual de sueldos) y Fase 7 (dashboard con indicadores reales).
-Quedan los reportes y la pantalla de auditoría. El detalle está en
-`EstructuraJardin.md` y en el plan de implementación.
+(liquidación mensual de sueldos), Fase 7 (dashboard con indicadores reales) y
+Fase 8 (reportes exportables de asistencias, sueldos y licencias). Queda la
+pantalla de auditoría: las escrituras se registran desde la Fase 1, falta la
+vista para consultarlas. El detalle está en `EstructuraJardin.md` y en el plan
+de implementación.
 
 El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
 rostros reales enrolados (`npm run rostros`):

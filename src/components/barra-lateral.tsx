@@ -100,7 +100,7 @@ export function BarraLateral({ rol, nombre, email }: Props) {
   return (
     <>
       {/* Escritorio: barra fija */}
-      <aside className="bg-card hidden w-60 shrink-0 flex-col gap-4 border-r p-3 md:flex">
+      <aside className="bg-card no-imprimir hidden w-60 shrink-0 flex-col gap-4 border-r p-3 md:flex">
         <Encabezado />
         <div className="flex-1 overflow-y-auto">
           <Enlaces rol={rol} />
@@ -109,7 +109,7 @@ export function BarraLateral({ rol, nombre, email }: Props) {
       </aside>
 
       {/* Celular: barra superior con menú desplegable */}
-      <header className="bg-card sticky top-0 z-40 flex items-center gap-2 border-b p-2 md:hidden">
+      <header className="bg-card no-imprimir sticky top-0 z-40 flex items-center gap-2 border-b p-2 md:hidden">
         <Sheet open={abierto} onOpenChange={setAbierto}>
           {/* Base UI compone con `render`, no con `asChild`. */}
           <SheetTrigger

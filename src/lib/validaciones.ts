@@ -366,6 +366,38 @@ export function problemaDelComprobante(archivo: {
   return null;
 }
 
+// ─────────────────────────── Reportes ───────────────────────────
+
+export const TIPOS_REPORTE_VALIDOS = [
+  "asistencias",
+  "sueldos",
+  "licencias",
+] as const;
+
+/**
+ * Filtros de un reporte.
+ *
+ * Los mismos valores viajan en la URL de la pantalla y en la del archivo, así
+ * que se parsean con este esquema en los dos lados: la vista previa y la
+ * descarga no pueden terminar mirando recortes distintos.
+ */
+export const filtrosReporteSchema = z.object({
+  tipo: z.enum(TIPOS_REPORTE_VALIDOS).default("asistencias"),
+  periodo: periodoYYYYMM,
+  empleado: z
+    .string()
+    .transform((v) => (v === "" || v === "todos" ? undefined : v))
+    .optional(),
+  sala: z
+    .string()
+    .transform((v) => (v === "" || v === "todos" ? undefined : v))
+    .optional(),
+  turno: z.enum(TURNOS).optional(),
+  estado: z.enum(ESTADOS_LICENCIA).optional(),
+});
+
+export type FiltrosReporte = z.infer<typeof filtrosReporteSchema>;
+
 // ─────────────────────────── Configuración ───────────────────────────
 
 export const configuracionSchema = z.object({

@@ -128,3 +128,55 @@
     @apply font-sans;
   }
 }
+/**
+ * Impresión.
+ *
+ * La hoja es el reporte y nada más: se van la barra lateral, el botón de
+ * tema y los filtros, y los colores se fuerzan a negro sobre blanco. Sin
+ * esto, imprimir en tema oscuro gasta un cartucho por hoja y la tabla sale
+ * ilegible.
+ */
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* La app se maqueta con la barra lateral al costado; en papel no hay
+     costado, así que el contenido ocupa la hoja entera. */
+  main {
+    padding: 0 !important;
+  }
+
+  table {
+    width: 100% !important;
+    font-size: 10px !important;
+    border-collapse: collapse !important;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid #ddd !important;
+    padding: 3px 6px !important;
+    color: #000 !important;
+  }
+
+  /* Que ninguna fila quede partida entre dos hojas y que el encabezado se
+     repita arriba de cada una. */
+  tr {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+}
