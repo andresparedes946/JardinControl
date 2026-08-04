@@ -43,7 +43,13 @@ export default auth((req) => {
 export const config = {
   // Se excluyen las rutas de Auth.js, los estáticos y los archivos de la PWA:
   // el service worker y el manifest tienen que servirse sin sesión.
+  //
+  // `apple-icon.png` e `icon.png` van en la lista por lo mismo que el manifest.
+  // Son los que genera Next desde `src/app/`, y los pide el teléfono al
+  // agregar la app a la pantalla de inicio, que es algo que se hace desde el
+  // login y por lo tanto sin sesión: si el middleware los redirige, iOS recibe
+  // HTML donde esperaba un PNG y deja un ícono genérico para siempre.
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons/|models/|offline).*)",
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|apple-icon.png|icon.png|manifest.webmanifest|sw.js|icons/|models/|offline).*)",
   ],
 };
