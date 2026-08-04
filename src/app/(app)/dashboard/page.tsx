@@ -35,7 +35,7 @@ export default async function DashboardPage() {
           Hola{nombre && `, ${nombre}`}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Cómo viene el día y cómo viene el mes.
+          Quién está hoy y cómo viene el mes.
         </p>
       </div>
 
@@ -58,106 +58,183 @@ async function Contenido() {
   ]);
 
   return (
-    <div className="space-y-6">
-      {dia.sinActividad && (
-        <div className="border-border text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm">
-          <CalendarOff className="size-4 shrink-0" />
-          <p>
-            {dia.sinActividad}: hoy nadie tiene que fichar, así que no se cuentan
-            ausencias.
-          </p>
+    <div className="space-y-10">
+      {/* El panel se parte en dos por el único eje que le importa a quien lo
+          mira: lo que está pasando ahora y lo que viene acumulando el mes.
+          Antes iban mezclados —"Horas del mes" al lado de "Llegadas tarde",
+          "Horas por sala" al lado de quién está hoy— y obligaba a leer el
+          subtítulo de cada tarjeta para saber de qué período hablaba. */}
+      <Seccion titulo="Hoy" detalle={fechaLarga(dia.fecha)}>
+        {dia.sinActividad && (
+          <div className="border-border text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm">
+            <CalendarOff className="size-4 shrink-0" />
+            <p>
+              {dia.sinActividad}: hoy nadie tiene que fichar, así que no se
+              cuentan ausencias.
+            </p>
+          </div>
+        )}
+
+        {/* Cuatro y no cinco: entra parejo en una, dos o cuatro columnas y no
+            deja ninguna tarjeta sola al final de la grilla. */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Tarjeta
+            etiqueta="Presentes"
+            valor={dia.presentes}
+            icono={UserCheck}
+            detalle={
+              dia.pendientes > 0
+                ? `${dia.pendientes} sin empezar su turno`
+                : undefined
+            }
+          />
+          <Tarjeta
+            etiqueta="Sin fichar"
+            valor={dia.sinFichar}
+            icono={UserX}
+            detalle={
+              dia.sinActividad ? "No es día laboral" : "Ya pasó su horario"
+            }
+            alerta={dia.sinFichar > 0}
+          />
+          <Tarjeta
+            etiqueta="Llegadas tarde"
+            valor={dia.tarde}
+            icono={Clock}
+            alerta={dia.tarde > 0}
+          />
+          <Tarjeta
+            etiqueta="De licencia"
+            valor={dia.licencias}
+            icono={FileText}
+            detalle="Con licencia aprobada"
+          />
         </div>
-      )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <Tarjeta
-          etiqueta="Presentes hoy"
-          valor={dia.presentes}
-          icono={UserCheck}
-          detalle={
-            dia.pendientes > 0
-              ? `${dia.pendientes} sin empezar su turno`
-              : undefined
-          }
-        />
-        <Tarjeta
-          etiqueta="Sin fichar"
-          valor={dia.sinFichar}
-          icono={UserX}
-          detalle={dia.sinActividad ? "No es día laboral" : "Ya pasó su horario"}
-          alerta={dia.sinFichar > 0}
-        />
-        <Tarjeta
-          etiqueta="Llegadas tarde"
-          valor={dia.tarde}
-          icono={Clock}
-          detalle="Hoy"
-          alerta={dia.tarde > 0}
-        />
-        <Tarjeta
-          etiqueta="De licencia"
-          valor={dia.licencias}
-          icono={FileText}
-          detalle="Con licencia aprobada"
-        />
-        <Tarjeta
-          etiqueta="Horas del mes"
-          valor={mes.horas}
-          icono={Clock}
-          detalle={`${mes.jornadas} ${mes.jornadas === 1 ? "jornada" : "jornadas"}`}
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
+        {/* A ancho completo: es lo que se mira primero al abrir el panel. Un
+            número dice cuántas faltan; esta lista dice cuáles. */}
+        <Card>
           <CardHeader>
-            <CardTitle className="text-base">Hoy en el jardín</CardTitle>
+            <CardTitle className="text-base">Quién está en el jardín</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <QuienEstaHoy empleadas={dia.empleadas} />
           </CardContent>
         </Card>
+      </Seccion>
 
-        <Card className="lg:col-span-2">
+      <Seccion
+        titulo={capitalizar(nombreDePeriodo(periodo))}
+        detalle={`${mes.jornadas} ${mes.jornadas === 1 ? "jornada" : "jornadas"} registradas`}
+      >
+        <div className="grid gap-4 lg:grid-cols-5">
+          <Card className="lg:col-span-2">
+            <CardContent className="grid grid-cols-2 gap-6 py-6">
+              <Estadistica
+                etiqueta="Horas trabajadas"
+                valor={mes.horas}
+                detalle={`${mes.jornadas} ${mes.jornadas === 1 ? "jornada" : "jornadas"}`}
+              />
+              {/* Sin jornadas no es 0% de puntualidad, es que todavía no hay
+                  con qué calcularla. Mostrar el cero decía que llegaron todas
+                  tarde justo el mes en que no fichó nadie. */}
+              <Estadistica
+                etiqueta="Puntualidad"
+                valor={mes.jornadas === 0 ? "—" : `${mes.puntualidad}%`}
+                detalle={
+                  mes.jornadas === 0
+                    ? "Sin jornadas todavía"
+                    : mes.tardanzas === 0
+                      ? "Sin llegadas tarde"
+                      : `${mes.tardanzas} de ${mes.jornadas} empezaron tarde`
+                }
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-base">Horas por sala</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <HorasPorSala salas={mes.porSala} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Horas por sala en {nombreDePeriodo(periodo)}
-            </CardTitle>
+            <CardTitle className="text-base">Asistencia día por día</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <HorasPorSala salas={mes.porSala} />
+            <AsistenciaDelMes dias={mes.dias} />
 
-            <div className="border-border mt-6 border-t pt-4">
-              <p className="text-muted-foreground text-xs">Puntualidad del mes</p>
-              <p className="mt-1 text-2xl font-semibold">{mes.puntualidad}%</p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                {mes.tardanzas === 0
-                  ? "Ninguna llegada tarde en el mes"
-                  : `${mes.tardanzas} de ${mes.jornadas} jornadas empezaron tarde`}
-              </p>
-            </div>
+            <p className="text-muted-foreground mt-4 text-xs">
+              El detalle, con las correcciones a mano, está en{" "}
+              <Link href="/asistencias" className="underline underline-offset-4">
+                Asistencias
+              </Link>
+              .
+            </p>
           </CardContent>
         </Card>
-      </div>
+      </Seccion>
+    </div>
+  );
+}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Asistencia de {nombreDePeriodo(periodo)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <AsistenciaDelMes dias={mes.dias} />
+/** "martes 4 de agosto". El día viene normalizado a medianoche UTC. */
+function fechaLarga(dia: Date): string {
+  return new Intl.DateTimeFormat("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(dia);
+}
 
-          <p className="text-muted-foreground mt-4 text-xs">
-            El detalle día por día, con las correcciones a mano, está en{" "}
-            <Link href="/asistencias" className="underline underline-offset-4">
-              Asistencias
-            </Link>
-            .
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function Seccion({
+  titulo,
+  detalle,
+  children,
+}: {
+  titulo: string;
+  detalle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-lg font-semibold tracking-tight">{titulo}</h2>
+        {detalle && (
+          <p className="text-muted-foreground text-sm first-letter:uppercase">
+            {detalle}
           </p>
-        </CardContent>
-      </Card>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Estadistica({
+  etiqueta,
+  valor,
+  detalle,
+}: {
+  etiqueta: string;
+  valor: string;
+  detalle: string;
+}) {
+  return (
+    <div>
+      <p className="text-muted-foreground text-sm font-medium">{etiqueta}</p>
+      <p className="mt-1 text-2xl font-semibold">{valor}</p>
+      <p className="text-muted-foreground mt-1 text-xs">{detalle}</p>
     </div>
   );
 }
@@ -187,7 +264,7 @@ function Tarjeta({
         {/* Sin tabular-nums: son números sueltos y grandes, y ahí los dígitos
             de ancho fijo hacen que un "12" se vea desarmado. */}
         <p
-          className={`text-2xl font-semibold ${
+          className={`text-3xl font-semibold tracking-tight ${
             alerta ? "text-amber-600 dark:text-amber-500" : ""
           }`}
         >

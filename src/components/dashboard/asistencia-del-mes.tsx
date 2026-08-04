@@ -25,6 +25,18 @@ export function AsistenciaDelMes({ dias }: { dias: DiaDelMes[] }) {
   const maximo = Math.max(1, ...dias.map((d) => d.presentes));
   const hayDatos = dias.some((d) => d.presentes > 0);
 
+  // Sin datos no se dibuja el gráfico vacío. Los ejes, la leyenda y el
+  // "máximo 1" de un mes sin fichajes ocupan media pantalla para no decir
+  // nada, y encima insinúan que hay algo que mirar.
+  if (!hayDatos) {
+    return (
+      <p className="text-muted-foreground py-6 text-sm">
+        Todavía no hay jornadas en este mes. Aparecen acá en cuanto alguien
+        fiche.
+      </p>
+    );
+  }
+
   return (
     <figure className="m-0 space-y-3">
       {/* El `pt-12` es la banda donde aparece el tooltip. Está reservada
@@ -106,13 +118,7 @@ export function AsistenciaDelMes({ dias }: { dias: DiaDelMes[] }) {
         </span>
       </div>
 
-      {!hayDatos && (
-        <p className="text-muted-foreground text-sm">
-          Todavía no hay jornadas registradas en este mes.
-        </p>
-      )}
-
-      {hayDatos && <TablaDeDias dias={dias} />}
+      <TablaDeDias dias={dias} />
     </figure>
   );
 }
