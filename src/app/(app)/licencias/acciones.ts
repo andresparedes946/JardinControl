@@ -116,10 +116,14 @@ async function guardarComprobantes(
  * como marcador provisorio, y la pantalla lo muestra como "sin período
  * definido" hasta que se resuelve.
  */
-export async function subirCertificado(formData: FormData): Promise<Resultado> {
-  const sesion = await requerirSesion();
-  const empleadoId = sesion.user.empleadoId;
-  if (!empleadoId) return { ok: false, error: SIN_EMPLEADA };
+export async function subirCertificado(
+  empleadoId: string,
+  formData: FormData,
+): Promise<Resultado> {
+  // Lo carga la dirección y no la empleada: desde que el fichaje es por QR,
+  // las maestras no tienen cuenta, así que el papel llega en mano o por
+  // mensaje y lo sube quien lo recibe.
+  const sesion = await requerirAdmin();
 
   const parseado = certificadoSchema.safeParse({
     detalle: formData.get("detalle") ?? "",
@@ -187,9 +191,7 @@ export async function adjuntarComprobantes(
   licenciaId: string,
   formData: FormData,
 ): Promise<Resultado> {
-  const sesion = await requerirSesion();
-  const empleadoId = sesion.user.empleadoId;
-  if (!empleadoId) return { ok: false, error: SIN_EMPLEADA };
+  const sesion = await requerirAdmin();
 
   const archivos = archivosDe(formData);
   if (typeof archivos === "string") return { ok: false, error: archivos };
@@ -205,9 +207,11 @@ export async function adjuntarComprobantes(
       },
     });
 
-    if (!licencia || licencia.empleadoId !== empleadoId) {
+    if (!licencia) {
       return { ok: false, error: "No se encontró la licencia." };
     }
+
+    const empleadoId = licencia.empleadoId;
 
     if (licencia.estado !== "PENDIENTE") {
       return { ok: false, error: "La licencia ya fue resuelta: no se le pueden agregar comprobantes." };

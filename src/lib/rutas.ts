@@ -30,7 +30,10 @@ export const RUTAS_PUBLICAS = ["/login"] as const;
 export const RUTAS_ABIERTAS = ["/f/"] as const;
 
 /** Dónde cae cada rol al entrar sin destino explícito. */
-export const INICIO_POR_ROL = {
-  ADMIN: "/dashboard",
-  EMPLEADO: "/fichar",
-} as const;
+/**
+ * Dónde cae quien entra sin destino explícito.
+ *
+ * Ya no depende del rol: desde que el fichaje es por QR, las maestras no
+ * tienen cuenta y la única sesión posible es la de la dirección.
+ */
+export const INICIO = "/dashboard";

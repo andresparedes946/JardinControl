@@ -8,11 +8,11 @@ export default async function LayoutApp({
   children: React.ReactNode;
 }) {
   const sesion = await requerirSesion();
-  const { rol, name, email } = sesion.user;
+  const { name, email } = sesion.user;
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
-      <BarraLateral rol={rol} nombre={name ?? ""} email={email ?? ""} />
+      <BarraLateral nombre={name ?? ""} email={email ?? ""} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="no-imprimir flex justify-end p-2 md:p-3">

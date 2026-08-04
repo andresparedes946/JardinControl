@@ -10,6 +10,13 @@ import { pesoLegible } from "@/components/licencias/lista-comprobantes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ACCEPT_COMPROBANTES,
@@ -18,17 +25,19 @@ import {
 } from "@/lib/validaciones";
 
 /**
- * Envío de un certificado.
+ * Carga de un certificado por parte de la dirección.
  *
- * Es lo único que hace la empleada acá: adjuntar el papel y, si quiere,
- * aclarar algo. No elige tipo ni fechas porque eso lo dice el certificado, y
- * quien lo lee y lo carga es la dirección al revisarlo.
- *
- * El formulario está siempre a la vista, sin un botón que abra un diálogo:
- * es la acción de la pantalla, no una opción entre varias.
+ * Las maestras no tienen cuenta, así que el papel llega en mano o por mensaje
+ * y lo sube quien lo recibe. Acá solo se elige de quién es y se adjunta: el
+ * tipo y los días los dice el certificado, y se cargan al aprobarlo.
  */
-export function FormularioCertificado() {
+export function FormularioCertificado({
+  empleadas,
+}: {
+  empleadas: { id: string; nombre: string }[];
+}) {
   const router = useRouter();
+  const [empleadaId, setEmpleadaId] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [detalle, setDetalle] = useState("");
   const [enviando, empezarEnvio] = useTransition();
@@ -64,8 +73,13 @@ export function FormularioCertificado() {
   function enviar(evento: React.FormEvent) {
     evento.preventDefault();
 
+    if (!empleadaId) {
+      toast.error("Elegí de quién es el certificado.");
+      return;
+    }
+
     if (archivos.length === 0) {
-      toast.error("Adjuntá el certificado antes de enviarlo.");
+      toast.error("Adjuntá el certificado antes de cargarlo.");
       return;
     }
 
@@ -74,7 +88,7 @@ export function FormularioCertificado() {
     for (const archivo of archivos) formData.append("archivos", archivo);
 
     empezarEnvio(async () => {
-      const r = await subirCertificado(formData);
+      const r = await subirCertificado(empleadaId, formData);
 
       if (!r.ok) {
         toast.error(r.error);
@@ -82,6 +96,7 @@ export function FormularioCertificado() {
       }
 
       toast.success(r.mensaje);
+      setEmpleadaId("");
       setArchivos([]);
       setDetalle("");
       router.refresh();
@@ -93,11 +108,33 @@ export function FormularioCertificado() {
       <CardContent className="py-4">
         <form onSubmit={enviar} className="space-y-4">
           <div>
-            <h2 className="font-medium">Enviar un certificado</h2>
+            <h2 className="font-medium">Cargar un certificado</h2>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Sacale una foto o subí el PDF. La dirección lo revisa y carga los
-              días que corresponden.
+              Sacale una foto al papel o subí el PDF. Los días que cubre se
+              cargan después, al aprobarlo.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="empleada">De quién es</Label>
+            <Select
+              items={Object.fromEntries(
+                empleadas.map((e) => [e.id, e.nombre]),
+              )}
+              value={empleadaId}
+              onValueChange={(v) => setEmpleadaId(String(v))}
+            >
+              <SelectTrigger id="empleada" className="w-full">
+                <SelectValue placeholder="Elegí la empleada" />
+              </SelectTrigger>
+              <SelectContent>
+                {empleadas.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -172,7 +209,7 @@ export function FormularioCertificado() {
               ) : (
                 <Upload className="size-4" />
               )}
-              Enviar certificado
+              Cargar certificado
             </Button>
           </div>
         </form>

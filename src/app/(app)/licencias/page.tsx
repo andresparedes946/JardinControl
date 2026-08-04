@@ -7,6 +7,7 @@ import {
   etiquetaDeTipoLicencia,
 } from "@/components/licencias/etiquetas";
 import { FiltrosLicencias } from "@/components/licencias/filtros-licencias";
+import { FormularioCertificado } from "@/components/licencias/formulario-certificado";
 import { ListaComprobantes } from "@/components/licencias/lista-comprobantes";
 import { RevisarLicencia } from "@/components/licencias/revisar-licencia";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,8 @@ async function Contenido({ searchParams }: { searchParams: Params }) {
 
   return (
     <div className="space-y-4">
+      <FormularioCertificado empleadas={empleadas} />
+
       <FiltrosLicencias empleadas={empleadas} />
 
       <div className="grid gap-3 sm:grid-cols-3">

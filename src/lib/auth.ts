@@ -46,13 +46,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           "$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidiu";
         const coincide = await compare(parseado.data.password, hash);
 
+        // Solo la dirección tiene cuenta. Desde que el fichaje es por QR con
+        // DNI y PIN, una maestra no necesita iniciar sesión, y las cuentas que
+        // le quedaron de antes no tienen que servir para entrar: su fila de
+        // `usuarios` sigue existiendo porque es donde viven su nombre y su
+        // email, no para darle acceso.
+        const puedeEntrar = usuario?.rol === "ADMIN";
+
         // El acceso se audita de los dos lados. Un registro que solo guarda lo
         // que salió bien no sirve para lo que se consulta una auditoría: una
         // seguidilla de intentos fallidos a las tres de la mañana es
         // exactamente el rastro que hay que poder ver. El motivo se guarda
         // porque quien lo lee ya es la dirección; al que intenta entrar se le
         // sigue devolviendo el mismo error genérico.
-        if (!usuario || !usuario.activo || !coincide) {
+        if (!usuario || !usuario.activo || !puedeEntrar || !coincide) {
           await registrarAuditoria({
             usuarioId: usuario?.id ?? null,
             accion: "LOGIN_FALLIDO",
@@ -64,7 +71,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 ? "email inexistente"
                 : !usuario.activo
                   ? "usuario inactivo"
-                  : "contraseña incorrecta",
+                  : !puedeEntrar
+                    ? "la cuenta no es de la dirección"
+                    : "contraseña incorrecta",
             },
           });
 

@@ -2,19 +2,13 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authConfig } from "@/lib/auth.config";
-import {
-  INICIO_POR_ROL,
-  RUTAS_ABIERTAS,
-  RUTAS_ADMIN,
-  RUTAS_PUBLICAS,
-} from "@/lib/rutas";
+import { INICIO, RUTAS_ABIERTAS, RUTAS_PUBLICAS } from "@/lib/rutas";
 
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const sesion = req.auth;
-  const rol = sesion?.user?.rol;
 
   const esPublica = RUTAS_PUBLICAS.some((r) => pathname.startsWith(r));
 
@@ -32,21 +26,14 @@ export default auth((req) => {
     return NextResponse.redirect(login);
   }
 
-  const inicio = INICIO_POR_ROL[rol ?? "EMPLEADO"];
-
-  // Con sesión activa, /login y / no tienen sentido: se manda a su inicio.
+  // Con sesión activa, /login y / no tienen sentido.
   if (esPublica || pathname === "/") {
-    return NextResponse.redirect(new URL(inicio, req.nextUrl));
+    return NextResponse.redirect(new URL(INICIO, req.nextUrl));
   }
 
-  const necesitaAdmin = RUTAS_ADMIN.some(
-    (r) => pathname === r || pathname.startsWith(`${r}/`),
-  );
-
-  if (necesitaAdmin && rol !== "ADMIN") {
-    return NextResponse.redirect(new URL(INICIO_POR_ROL.EMPLEADO, req.nextUrl));
-  }
-
+  // Ya no hace falta separar por rol: solo la dirección puede iniciar sesión
+  // —lo impone `authorize` en src/lib/auth.ts—, así que cualquiera que llegue
+  // hasta acá con sesión es admin. Las guardas de cada page siguen igual.
   return NextResponse.next();
 });
 

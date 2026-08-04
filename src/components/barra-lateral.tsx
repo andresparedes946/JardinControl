@@ -14,28 +14,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { Rol } from "@/generated/prisma/enums";
 import { NAVEGACION } from "@/lib/navegacion";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  rol: Rol;
   nombre: string;
   email: string;
 };
 
-function Enlaces({
-  rol,
-  onNavegar,
-}: {
-  rol: Rol;
-  onNavegar?: () => void;
-}) {
+function Enlaces({ onNavegar }: { onNavegar?: () => void }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-col gap-1">
-      {NAVEGACION[rol].map(({ href, etiqueta, icono: Icono }) => {
+      {NAVEGACION.map(({ href, etiqueta, icono: Icono }) => {
         const activo = pathname === href || pathname.startsWith(`${href}/`);
 
         return (
@@ -94,7 +86,7 @@ function PiePerfil({ nombre, email }: { nombre: string; email: string }) {
   );
 }
 
-export function BarraLateral({ rol, nombre, email }: Props) {
+export function BarraLateral({ nombre, email }: Props) {
   const [abierto, setAbierto] = useState(false);
 
   return (
@@ -103,7 +95,7 @@ export function BarraLateral({ rol, nombre, email }: Props) {
       <aside className="bg-card no-imprimir hidden w-60 shrink-0 flex-col gap-4 border-r p-3 md:flex">
         <Encabezado />
         <div className="flex-1 overflow-y-auto">
-          <Enlaces rol={rol} />
+          <Enlaces />
         </div>
         <PiePerfil nombre={nombre} email={email} />
       </aside>
@@ -123,7 +115,7 @@ export function BarraLateral({ rol, nombre, email }: Props) {
             <SheetTitle className="sr-only">Menú</SheetTitle>
             <Encabezado />
             <div className="flex-1 overflow-y-auto">
-              <Enlaces rol={rol} onNavegar={() => setAbierto(false)} />
+              <Enlaces onNavegar={() => setAbierto(false)} />
             </div>
             <PiePerfil nombre={nombre} email={email} />
           </SheetContent>
