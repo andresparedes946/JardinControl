@@ -81,9 +81,55 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
 | `npm run db:migrate` | Crea y aplica una migración |
 | `npm run db:seed` | Carga datos iniciales (idempotente) |
 | `npm run db:studio` | Prisma Studio |
+| `npm run limpiar` | Cuenta los movimientos de prueba; con `-- --si` los borra |
 | `npm run iconos` | Regenera los íconos de la PWA |
 | `npm run modelos` | Vuelve a bajar los modelos de reconocimiento facial a `public/models` |
 | `npm run rostros` | Mide los enrolamientos guardados, para calibrar los umbrales con datos |
+
+## Puesta en producción (Vercel)
+
+Vercel resuelve lo que en desarrollo cuesta: sirve la app por HTTPS en un
+dominio real, y la cámara y el GPS solo funcionan en contexto seguro. Con eso
+se termina el certificado autofirmado y la advertencia en cada teléfono.
+
+1. **Importar el repo** desde el panel de Vercel. Se detecta Next.js solo; no
+   hay que tocar el comando de build ni el directorio de salida.
+
+2. **Cargar las variables de entorno**, las mismas seis de `.env.example`.
+   Ojo con dos:
+   - `AUTH_SECRET` tiene que ser **uno nuevo**, distinto del de desarrollo.
+     Se genera con `npx auth secret`.
+   - `DIRECT_URL` hace falta también en producción, aunque la app no la use en
+     runtime: el build corre `prisma migrate deploy` y las migraciones no pasan
+     por el pooler.
+
+   No hace falta `AUTH_URL`: Auth.js detecta el host solo cuando corre en
+   Vercel.
+
+3. **Dejar la región por defecto.** Las funciones convienen pegadas a la base
+   de datos y no a los usuarios, porque cada pantalla consulta varias veces y
+   una sola ida y vuelta de más pesa más que la distancia al teléfono. Si la
+   latencia desde Argentina llegara a molestar, lo que se mueve es el proyecto
+   de Supabase, no Vercel.
+
+4. **Cambiar las contraseñas iniciales.** El seed deja `Cambiar.2026` por
+   defecto y está en el repo. Antes de que el sistema quede accesible desde
+   internet hay que cambiarla desde "Mi perfil", o sembrar con
+   `SEED_PASSWORD_ADMIN` y `SEED_PASSWORD_MAESTRAS` en el entorno.
+
+5. **Limpiar los datos de prueba** con `npm run limpiar -- --si`, que borra
+   fichajes, asistencias, licencias con sus archivos, liquidaciones y
+   auditoría, y deja el padrón, los rostros enrolados y la configuración.
+
+6. **Verificar la geocerca** en Configuración: si se movió el centro para
+   probar fuera del jardín, hay que devolverlo. `npm run db:seed` reescribe la
+   configuración entera con los valores del jardín.
+
+Las migraciones se aplican en cada deploy porque el build es
+`prisma generate && prisma migrate deploy && next build`. Es una migración
+pendiente menos de la que acordarse, a cambio de que un deploy pueda tocar el
+esquema de producción: conviene mirar qué hay en `prisma/migrations` antes de
+publicar.
 
 ## Decisiones que conviene conocer
 

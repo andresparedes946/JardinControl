@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:https": "next dev -H 0.0.0.0 --experimental-https --experimental-https-key certificates/dev-key.pem --experimental-https-cert certificates/dev-cert.pem",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -15,6 +15,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "limpiar": "tsx scripts/limpiar-datos-de-prueba.ts",
     "iconos": "node scripts/generar-iconos.mjs",
     "modelos": "node scripts/descargar-modelos.mjs",
     "rostros": "tsx scripts/medir-rostros.ts",
