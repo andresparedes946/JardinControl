@@ -46,9 +46,6 @@ export default async function ConfiguracionPage() {
               jardinLng: config.jardinLng,
               radioMetros: config.radioMetros,
               precisionMaximaMetros: config.precisionMaximaMetros,
-              similitudMinima: config.similitudMinima,
-              umbralLiveness: config.umbralLiveness,
-              umbralAntispoof: config.umbralAntispoof,
               diasLaborales: config.diasLaborales,
             }}
           />

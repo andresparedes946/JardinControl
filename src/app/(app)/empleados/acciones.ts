@@ -3,21 +3,23 @@
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
+import { randomInt } from "node:crypto";
+
 import { registrarAuditoria } from "@/lib/auditoria";
 import { generarPasswordProvisional } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import {
-  MUESTRAS_ENROLAMIENTO,
-  SIMILITUD_MINIMA_ENTRE_MUESTRAS,
-  similitud,
-} from "@/lib/rostro";
 import { requerirAdmin } from "@/lib/session";
 import {
   empleadoSchema,
-  enrolamientoSchema,
   nuevoEmpleadoSchema,
+  PIN_LARGO,
   type DatosEmpleado,
 } from "@/lib/validaciones";
+
+/** PIN de cuatro dígitos, con `randomInt` y no `Math.random`. */
+function generarPin(): string {
+  return String(randomInt(0, 10 ** PIN_LARGO)).padStart(PIN_LARGO, "0");
+}
 
 export type Resultado =
   | { ok: true; mensaje: string }
@@ -231,50 +233,17 @@ export async function cambiarEstadoEmpleado(
 }
 
 /**
- * Guarda el enrolamiento facial de una empleada.
+ * Asigna un PIN de fichaje nuevo y lo devuelve una sola vez.
  *
- * Las fotos del enrolamiento nunca salen del navegador: lo que viaja y se
- * guarda son los vectores, que no permiten reconstruir la cara. Es también
- * la razón por la que el descriptor lo calcula el cliente.
- *
- * Ese mismo reparto obliga a desconfiar de lo que llega: el navegador puede
- * mandar diez vectores cualesquiera. Contra eso, el servidor comprueba que
- * todas se parezcan a la primera, que es la que se toma mirando de frente.
+ * Se genera acá y no lo elige la empleada: sin cuenta propia no hay dónde
+ * elegirlo, y dejar que lo diga en voz alta en la puerta del jardín es peor
+ * que sortearlo. Se guarda hasheado y no vuelve a mostrarse nunca, así que si
+ * se pierde hay que generar otro.
  */
-export async function guardarDescriptores(
+export async function asignarPin(
   id: string,
-  entrada: unknown,
-): Promise<Resultado> {
+): Promise<Resultado & { pin?: string }> {
   const sesion = await requerirAdmin();
-
-  const parseado = enrolamientoSchema.safeParse(entrada);
-  if (!parseado.success) {
-    return {
-      ok: false,
-      error: parseado.error.issues[0]?.message ?? "Muestras inválidas",
-    };
-  }
-
-  const { muestras } = parseado.data;
-
-  // La referencia es la primera muestra. Comparar contra ella y no todas
-  // contra todas mantiene el control en O(n) y ancla el parecido a la captura
-  // frontal, que es la que más información de identidad tiene.
-  const referencia = muestras[0].descriptor;
-  const dispar = muestras
-    .slice(1)
-    .some(
-      (m) =>
-        similitud(referencia, m.descriptor) < SIMILITUD_MINIMA_ENTRE_MUESTRAS,
-    );
-
-  if (dispar) {
-    return {
-      ok: false,
-      error:
-        "Las muestras no parecen ser de la misma persona. Repetí la captura con una sola cara frente a la cámara.",
-    };
-  }
 
   try {
     const empleado = await prisma.empleado.findUnique({
@@ -284,78 +253,28 @@ export async function guardarDescriptores(
 
     if (!empleado) return { ok: false, error: "No se encontró la empleada." };
 
-    const previos = await prisma.$transaction(async (tx) => {
-      // Un enrolamiento nuevo reemplaza al anterior en vez de sumarse: los
-      // vectores viejos son datos biométricos que ya no hacen falta, y
-      // dejarlos activos ampliaría para siempre lo que da por buena la cara.
-      const { count } = await tx.descriptorFacial.deleteMany({
-        where: { empleadoId: id },
-      });
+    const pin = generarPin();
 
-      await tx.descriptorFacial.createMany({
-        data: muestras.map((m) => ({
-          empleadoId: id,
-          descriptor: m.descriptor,
-          calidad: m.calidad,
-        })),
-      });
-
-      return count;
+    await prisma.empleado.update({
+      where: { id },
+      data: { pinFichaje: await hash(pin, 10) },
     });
 
     await registrarAuditoria({
       usuarioId: sesion.user.id,
-      accion: previos > 0 ? "REENROLAR_ROSTRO" : "ENROLAR_ROSTRO",
+      accion: "ASIGNAR_PIN",
       entidad: "Empleado",
       entidadId: id,
-      detalle: { muestras: muestras.length, reemplazadas: previos },
     });
 
     revalidatePath("/empleados");
-    revalidatePath(`/empleados/${id}/rostro`);
+    revalidatePath(`/empleados/${id}`);
 
     const nombre = `${empleado.usuario.nombre} ${empleado.usuario.apellido}`;
-    return {
-      ok: true,
-      mensaje: `Rostro de ${nombre} registrado con ${muestras.length} muestras.`,
-    };
+    return { ok: true, mensaje: `PIN nuevo para ${nombre}.`, pin };
   } catch (error) {
-    console.error("guardarDescriptores:", error);
-    return { ok: false, error: "No se pudo guardar el registro facial." };
-  }
-}
-
-/** Borra el enrolamiento. Deja a la empleada sin poder fichar hasta repetirlo. */
-export async function borrarDescriptores(id: string): Promise<Resultado> {
-  const sesion = await requerirAdmin();
-
-  try {
-    const { count } = await prisma.descriptorFacial.deleteMany({
-      where: { empleadoId: id },
-    });
-
-    if (count === 0) {
-      return { ok: false, error: "Esa empleada no tiene rostro registrado." };
-    }
-
-    await registrarAuditoria({
-      usuarioId: sesion.user.id,
-      accion: "BORRAR_ROSTRO",
-      entidad: "Empleado",
-      entidadId: id,
-      detalle: { muestras: count },
-    });
-
-    revalidatePath("/empleados");
-    revalidatePath(`/empleados/${id}/rostro`);
-
-    return {
-      ok: true,
-      mensaje: `Registro facial borrado. Hay que volver a tomar las ${MUESTRAS_ENROLAMIENTO} muestras para que pueda fichar.`,
-    };
-  } catch (error) {
-    console.error("borrarDescriptores:", error);
-    return { ok: false, error: "No se pudo borrar el registro facial." };
+    console.error("asignarPin:", error);
+    return { ok: false, error: "No se pudo generar el PIN." };
   }
 }
 

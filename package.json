@@ -17,8 +17,6 @@
     "db:studio": "prisma studio",
     "limpiar": "tsx scripts/limpiar-datos-de-prueba.ts",
     "iconos": "node scripts/generar-iconos.mjs",
-    "modelos": "node scripts/descargar-modelos.mjs",
-    "rostros": "tsx scripts/medir-rostros.ts",
     "fichajes": "tsx scripts/ver-fichajes.ts"
   },
   "dependencies": {
@@ -29,7 +27,6 @@
     "@prisma/client": "^7.9.1",
     "@supabase/supabase-js": "^2.111.0",
     "@tanstack/react-query": "^5.101.4",
-    "@vladmandic/human": "^3.3.6",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

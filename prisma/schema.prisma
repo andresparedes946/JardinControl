@@ -119,7 +119,6 @@ model Empleado {
 
   usuario       Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   sala          Sala?              @relation(fields: [salaId], references: [id], onDelete: SetNull)
-  descriptores  DescriptorFacial[]
   asistencias   Asistencia[]
   fichajes      Fichaje[]
   licencias     Licencia[]
@@ -130,25 +129,12 @@ model Empleado {
   @@map("empleados")
 }
 
-// ─────────────────────── Biometría ───────────────────────
-
-/// Solo se almacena el vector facial, nunca las fotos del enrolamiento.
-/// Se guardan varios por empleada para tolerar cambios de luz y ángulo.
-model DescriptorFacial {
-  id         String   @id @default(cuid())
-  empleadoId String   @map("empleado_id")
-  /// Embedding producido por @vladmandic/human.
-  descriptor Float[]
-  /// Score de calidad de la captura al momento del enrolamiento (0-1).
-  calidad    Float?
-  activo     Boolean  @default(true)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  empleado Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
-
-  @@index([empleadoId, activo])
-  @@map("descriptores_faciales")
-}
+// El fichaje pasó de reconocimiento facial a código QR más DNI y PIN, así que
+// la tabla `descriptores_faciales` y los vectores que tenía se borraron. No
+// quedó apagada por las dudas: mientras un embedding facial exista en la base
+// sigue siendo un dato biométrico guardado, con todo lo que eso implica, para
+// una función que ya no se usa. La identidad ahora la sostienen el PIN y la
+// geocerca; ver `src/lib/fichaje-qr.ts`.
 
 // ─────────────────────── Asistencia ───────────────────────
 
@@ -285,13 +271,6 @@ model Configuracion {
   radioMetros           Int      @default(50) @map("radio_metros")
   /// Si el GPS reporta una precisión peor que esto, se rechaza el fichaje.
   precisionMaximaMetros Int      @default(100) @map("precision_maxima_metros")
-  /// Similitud mínima para dar por válido el rostro, de 0 a 1 (mayor = más
-  /// estricto). Es la escala normalizada de @vladmandic/human, no una
-  /// distancia: ver `similitud()` en src/lib/rostro.ts.
-  similitudMinima       Float    @default(0.5) @map("similitud_minima")
-  /// Scores mínimos de liveness y antispoof (0-1).
-  umbralLiveness        Float    @default(0.7) @map("umbral_liveness")
-  umbralAntispoof       Float    @default(0.7) @map("umbral_antispoof")
   /// Días laborales, 0 = domingo … 6 = sábado.
   diasLaborales         Int[]    @default([1, 2, 3, 4, 5]) @map("dias_laborales")
   zonaHoraria           String   @default("America/Argentina/Buenos_Aires") @map("zona_horaria")

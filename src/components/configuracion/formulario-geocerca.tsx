@@ -236,60 +236,6 @@ export function FormularioGeocerca({ inicial }: { inicial: Valores }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reconocimiento facial</CardTitle>
-          <CardDescription>
-            Los tres van de 0 a 1 y en el mismo sentido: cuanto más alto, más
-            exigente. Subirlos rechaza más fichajes legítimos; bajarlos deja
-            pasar más ajenos.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <Campo
-            id="similitudMinima"
-            etiqueta="Similitud mínima"
-            ayuda="Parecido exigido con el rostro registrado"
-            error={errors.similitudMinima?.message}
-          >
-            <Input
-              id="similitudMinima"
-              type="number"
-              step="0.05"
-              {...register("similitudMinima")}
-            />
-          </Campo>
-
-          <Campo
-            id="umbralLiveness"
-            etiqueta="Umbral liveness"
-            ayuda="Score mínimo, de 0 a 1"
-            error={errors.umbralLiveness?.message}
-          >
-            <Input
-              id="umbralLiveness"
-              type="number"
-              step="0.05"
-              {...register("umbralLiveness")}
-            />
-          </Campo>
-
-          <Campo
-            id="umbralAntispoof"
-            etiqueta="Umbral antispoof"
-            ayuda="Score mínimo, de 0 a 1"
-            error={errors.umbralAntispoof?.message}
-          >
-            <Input
-              id="umbralAntispoof"
-              type="number"
-              step="0.05"
-              {...register("umbralAntispoof")}
-            />
-          </Campo>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Días laborales</CardTitle>
           <CardDescription>
             Solo en estos días se marca ausente a quien no fichó.

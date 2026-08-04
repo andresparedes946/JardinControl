@@ -48,15 +48,15 @@ async function main() {
   console.log(`  liquidaciones   ${liquidaciones}`);
   console.log(`  auditoría       ${auditoria}`);
 
-  const [empleados, descriptores, salas] = await Promise.all([
+  const [empleados, conPin, salas] = await Promise.all([
     prisma.empleado.count(),
-    prisma.descriptorFacial.count({ where: { activo: true } }),
+    prisma.empleado.count({ where: { pinFichaje: { not: null } } }),
     prisma.sala.count(),
   ]);
 
   console.log("\nSe conserva:");
   console.log(`  empleadas       ${empleados}`);
-  console.log(`  rostros         ${descriptores}`);
+  console.log(`  con PIN         ${conPin}`);
   console.log(`  salas           ${salas}`);
   console.log(`  horarios, feriados y configuración del jardín`);
 

@@ -58,10 +58,6 @@ async function main() {
     `\ngeocerca: ${config?.radioMetros} m sobre ${config?.jardinLat}, ${config?.jardinLng}` +
       `  (precision maxima ±${config?.precisionMaximaMetros} m)`,
   );
-  console.log(
-    `umbrales: similitud ${config?.similitudMinima}  antispoof ${config?.umbralAntispoof}  liveness ${config?.umbralLiveness}`,
-  );
-
   await prisma.$disconnect();
 }
 

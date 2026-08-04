@@ -1,4 +1,4 @@
-import { Plus, ScanFace } from "lucide-react";
+import { KeyRound, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -121,7 +121,7 @@ async function Contenido({ searchParams }: { searchParams: Params }) {
                   <TableHead>Sala</TableHead>
                   <TableHead>Turno</TableHead>
                   <TableHead className="text-right">Valor hora</TableHead>
-                  <TableHead>Rostro</TableHead>
+                  <TableHead>PIN</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -162,22 +162,16 @@ async function Contenido({ searchParams }: { searchParams: Params }) {
                       {pesos.format(Number(e.valorHora))}
                     </TableCell>
                     <TableCell>
-                      <Link
-                        href={`/empleados/${e.id}/rostro`}
-                        className="hover:underline"
-                        aria-label={`Registro facial de ${e.usuario.nombre} ${e.usuario.apellido}`}
-                      >
-                        {e._count.descriptores > 0 ? (
-                          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                            <ScanFace className="size-3.5" />
-                            Registrado
-                          </span>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            Sin registrar
-                          </Badge>
-                        )}
-                      </Link>
+                      {e.pinFichaje ? (
+                        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                          <KeyRound className="size-3.5" />
+                          Asignado
+                        </span>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          Sin PIN
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge

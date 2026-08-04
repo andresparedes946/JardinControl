@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { DIMENSION_DESCRIPTOR, MUESTRAS_ENROLAMIENTO } from "@/lib/rostro";
-
 /**
  * Esquemas compartidos entre los formularios del cliente y las Server
  * Actions. La misma validación corre en los dos lados: el cliente para dar
@@ -97,34 +95,6 @@ export const filtrosEmpleadosSchema = z.object({
 
 export type FiltrosEmpleados = z.infer<typeof filtrosEmpleadosSchema>;
 
-// ─────────────────────────── Registro facial ───────────────────────────
-
-/**
- * El descriptor lo calcula el navegador, así que llega como cualquier otro
- * dato del cliente: sin confianza. Se comprueba el largo exacto que produce
- * el modelo y que cada componente sea un número real.
- */
-export const muestraFacialSchema = z.object({
-  descriptor: z
-    .array(z.number().finite("El descriptor tiene valores inválidos"))
-    .length(
-      DIMENSION_DESCRIPTOR,
-      `El descriptor no mide ${DIMENSION_DESCRIPTOR} valores`,
-    ),
-  calidad: z.number().min(0).max(1),
-});
-
-export const enrolamientoSchema = z.object({
-  muestras: z
-    .array(muestraFacialSchema)
-    .length(
-      MUESTRAS_ENROLAMIENTO,
-      `Hacen falta ${MUESTRAS_ENROLAMIENTO} muestras`,
-    ),
-});
-
-export type MuestraFacial = z.infer<typeof muestraFacialSchema>;
-
 // ─────────────────────────── Asistencias ───────────────────────────
 
 export const ESTADOS_ASISTENCIA = [
@@ -195,32 +165,6 @@ export const ajusteAsistenciaSchema = z
   });
 
 export type DatosAjusteAsistencia = z.infer<typeof ajusteAsistenciaSchema>;
-
-// ─────────────────────────── Fichaje ───────────────────────────
-
-/**
- * Lo que manda el navegador al fichar: un descriptor, la lectura del GPS y
- * los scores que produjo el modelo. Nada de esto se toma por bueno; el
- * servidor decide con estos valores pero validándolos primero.
- */
-export const fichajeSchema = z.object({
-  descriptor: z
-    .array(z.number().finite("El descriptor tiene valores inválidos"))
-    .length(
-      DIMENSION_DESCRIPTOR,
-      `El descriptor no mide ${DIMENSION_DESCRIPTOR} valores`,
-    ),
-  calidad: z.number().min(0).max(1),
-  scoreLiveness: z.number().min(0).max(1),
-  scoreAntispoof: z.number().min(0).max(1),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-  // Sin tope superior a propósito: una precisión malísima es un dato válido
-  // que el servidor tiene que ver para poder rechazarla y dejarla registrada.
-  precisionMetros: z.number().min(0),
-});
-
-export type DatosFichaje = z.infer<typeof fichajeSchema>;
 
 // ─────────────────────────── Fichaje por QR ───────────────────────────
 
@@ -522,15 +466,6 @@ export const configuracionSchema = z.object({
     .int()
     .min(5, "Mínimo 5 m")
     .max(500, "Máximo 500 m"),
-  // Va al revés que la distancia que había antes: más alto, más estricto.
-  // Por debajo de 0.3 entra cualquier cara; por encima de 0.9 no entra ni la
-  // titular con otra luz.
-  similitudMinima: z.coerce
-    .number()
-    .min(0.3, "Menos de 0.3 acepta casi cualquier rostro")
-    .max(0.9, "Más de 0.9 rechaza hasta a la propia empleada"),
-  umbralLiveness: z.coerce.number().min(0).max(1),
-  umbralAntispoof: z.coerce.number().min(0).max(1),
   diasLaborales: z
     .array(z.coerce.number().int().min(0).max(6))
     .min(1, "Elegí al menos un día laboral"),
