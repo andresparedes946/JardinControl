@@ -117,6 +117,16 @@ cámara. `/certificates` está en `.gitignore`: la clave privada no va al repo.
   ausencias sin justificar en el historial y en la liquidación. Nunca se pisa
   un día con ingreso fichado ni una fila corregida a mano, y pasar una
   licencia aprobada a rechazada deshace la marca. Ver `src/lib/licencias.ts`.
+- **No fichar todavía no es faltar.** A las 8 de la mañana ninguna maestra del
+  turno tarde llegó tarde: su turno no empezó. El dashboard separa "sin fichar"
+  (ya pasó su horario más la tolerancia) de "no empezó", porque contarlas todas
+  como ausentes haría que el panel marque cinco ausencias cada mañana y nadie
+  le crea nunca más. Ver `src/lib/dashboard.ts`.
+- **Los gráficos son monocromos y el ámbar está reservado.** La paleta de la
+  app no tiene color, así que las barras van en un gris de la escala y el
+  ámbar significa una sola cosa en todo el sistema: llegó tarde. Como el color
+  no puede ser el único canal, cada gráfico lleva leyenda, tooltip y una tabla
+  desplegable con los mismos números.
 - **Un día de licencia aprobada se paga a las horas del turno.** Si no, una
   maestra con certificado médico cobraría cero por esos días. En la
   liquidación las horas de licencia van en una columna aparte de las
@@ -163,10 +173,10 @@ reescribe la configuración entera.
 Terminadas: Fase 0 (andamiaje), Fase 1 (ABM de empleados, configuración y
 contraseñas), Fase 2 (registro facial), Fase 3 (fichaje con reconocimiento
 facial y geocerca), Fase 4 (asistencias para la dirección y mi historial para
-la maestra), Fase 5 (licencias: envío de certificados y resolución) y Fase 6
-(liquidación mensual de sueldos). Quedan el dashboard con indicadores, los
-reportes y la pantalla de auditoría. El detalle está en `EstructuraJardin.md`
-y en el plan de implementación.
+la maestra), Fase 5 (licencias: envío de certificados y resolución), Fase 6
+(liquidación mensual de sueldos) y Fase 7 (dashboard con indicadores reales).
+Quedan los reportes y la pantalla de auditoría. El detalle está en
+`EstructuraJardin.md` y en el plan de implementación.
 
 El `similitudMinima` de la configuración queda en 0.5, contrastado con dos
 rostros reales enrolados (`npm run rostros`):
