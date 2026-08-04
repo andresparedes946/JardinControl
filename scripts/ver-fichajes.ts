@@ -42,9 +42,6 @@ async function main() {
     console.log(`\n${f.timestamp.toISOString()}  ${quien}`);
     console.log(`  ${f.tipo} → ${f.resultado}`);
     console.log(
-      `  rostro ${n(f.scoreFacial)}   antispoof ${n(f.scoreAntispoof)}   liveness ${n(f.scoreLiveness)}`,
-    );
-    console.log(
       `  distancia ${n(f.distanciaMetros, 0)} m   precision GPS ±${n(f.precisionMetros, 0)} m`,
     );
     if (f.lat != null && f.lng != null) {

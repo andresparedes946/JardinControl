@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  Hash,
   KeyRound,
   MoreHorizontal,
   Pencil,
-  ScanFace,
   UserCheck,
   UserX,
 } from "lucide-react";
@@ -14,6 +14,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
+  asignarPin,
   cambiarEstadoEmpleado,
   restablecerPassword,
 } from "@/app/(app)/empleados/acciones";
@@ -37,15 +38,30 @@ type Props = {
   id: string;
   nombre: string;
   estado: "ACTIVO" | "INACTIVO";
+  conPin: boolean;
 };
 
-export function AccionesFila({ id, nombre, estado }: Props) {
+export function AccionesFila({ id, nombre, estado, conPin }: Props) {
   const router = useRouter();
   const [pendiente, startTransition] = useTransition();
   const [confirmarBaja, setConfirmarBaja] = useState(false);
   const [passwordNueva, setPasswordNueva] = useState<string | null>(null);
+  const [pinNuevo, setPinNuevo] = useState<string | null>(null);
 
   const activa = estado === "ACTIVO";
+
+  function generarPin() {
+    startTransition(async () => {
+      const r = await asignarPin(id);
+
+      if (r.ok && r.pin) {
+        setPinNuevo(r.pin);
+        router.refresh();
+      } else {
+        toast.error("error" in r ? r.error : "No se pudo generar el PIN");
+      }
+    });
+  }
 
   function alternarEstado() {
     startTransition(async () => {
@@ -90,9 +106,9 @@ export function AccionesFila({ id, nombre, estado }: Props) {
             <Pencil className="size-4" />
             Editar
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href={`/empleados/${id}/rostro`} />}>
-            <ScanFace className="size-4" />
-            Registro facial
+          <DropdownMenuItem onClick={generarPin}>
+            <Hash className="size-4" />
+            {conPin ? "Generar PIN nuevo" : "Asignar PIN de fichaje"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={restablecer}>
             <KeyRound className="size-4" />
@@ -137,6 +153,25 @@ export function AccionesFila({ id, nombre, estado }: Props) {
             >
               Dar de baja
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pinNuevo !== null} onOpenChange={() => setPinNuevo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>PIN de fichaje de {nombre}</DialogTitle>
+            <DialogDescription>
+              Anotalo o dictáselo ahora: no se vuelve a mostrar. Lo va a usar
+              con su DNI cada vez que escanee el código de la entrada. Si se le
+              pierde, generá uno nuevo desde acá.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="bg-muted rounded-md px-4 py-4 text-center font-mono text-3xl tracking-[0.4em]">
+            {pinNuevo}
+          </p>
+          <DialogFooter>
+            <Button onClick={() => setPinNuevo(null)}>Listo</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -187,6 +187,7 @@ async function Contenido({ searchParams }: { searchParams: Params }) {
                         id={e.id}
                         nombre={`${e.usuario.nombre} ${e.usuario.apellido}`}
                         estado={e.estado}
+                        conPin={e.pinFichaje !== null}
                       />
                     </TableCell>
                   </TableRow>

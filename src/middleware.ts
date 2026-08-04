@@ -2,7 +2,12 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authConfig } from "@/lib/auth.config";
-import { INICIO_POR_ROL, RUTAS_ADMIN, RUTAS_PUBLICAS } from "@/lib/rutas";
+import {
+  INICIO_POR_ROL,
+  RUTAS_ABIERTAS,
+  RUTAS_ADMIN,
+  RUTAS_PUBLICAS,
+} from "@/lib/rutas";
 
 const { auth } = NextAuth(authConfig);
 
@@ -12,6 +17,11 @@ export default auth((req) => {
   const rol = sesion?.user?.rol;
 
   const esPublica = RUTAS_PUBLICAS.some((r) => pathname.startsWith(r));
+
+  // Antes que nada: la página del QR pasa siempre, haya sesión o no.
+  if (RUTAS_ABIERTAS.some((r) => pathname.startsWith(r))) {
+    return NextResponse.next();
+  }
 
   if (!sesion) {
     if (esPublica) return NextResponse.next();

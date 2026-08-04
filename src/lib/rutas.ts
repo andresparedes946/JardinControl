@@ -17,8 +17,17 @@ export const RUTAS_ADMIN = [
   "/auditoria",
 ] as const;
 
-/** Accesibles sin sesión. */
+/** Accesibles sin sesión. Con sesión activa no tienen sentido: se redirige. */
 export const RUTAS_PUBLICAS = ["/login"] as const;
+
+/**
+ * Abiertas a cualquiera, con sesión o sin ella.
+ *
+ * La página del QR la abren maestras que no tienen cuenta, así que no puede
+ * pedir sesión; y tampoco puede redirigir a quien sí la tenga, porque la
+ * dirección necesita poder abrirla para probar que el código funciona.
+ */
+export const RUTAS_ABIERTAS = ["/f/"] as const;
 
 /** Dónde cae cada rol al entrar sin destino explícito. */
 export const INICIO_POR_ROL = {
