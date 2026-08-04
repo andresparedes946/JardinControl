@@ -34,6 +34,10 @@ export const NAVEGACION: Record<Rol, ItemNavegacion[]> = {
     { href: "/reportes", etiqueta: "Reportes", icono: BarChart3 },
     { href: "/auditoria", etiqueta: "Auditoría", icono: ScrollText },
     { href: "/configuracion", etiqueta: "Configuración", icono: Settings },
+    // La dirección también tiene contraseña y también la cambia. Faltaba el
+    // enlace: la pantalla existía desde la Fase 1 y solo la veían las
+    // maestras, así que la única forma de llegar era escribir la URL.
+    { href: "/perfil", etiqueta: "Mi perfil", icono: User },
   ],
   EMPLEADO: [
     { href: "/fichar", etiqueta: "Fichar", icono: ScanFace },
