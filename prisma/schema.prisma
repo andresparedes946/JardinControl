@@ -50,6 +50,12 @@ enum ResultadoFichaje {
   RECHAZADO_LIVENESS
   RECHAZADO_SIN_ENROLAR
   RECHAZADO_DUPLICADO
+  /// El QR venció entre que se abrió la página y se confirmó el fichaje:
+  /// pasa cuando la dirección regenera el código mientras alguien lo usa.
+  RECHAZADO_TOKEN
+  /// DNI correcto y PIN incorrecto. Se registra para que un goteo de intentos
+  /// fallidos sobre el mismo legajo quede visible en la auditoría.
+  RECHAZADO_PIN
 }
 
 enum TipoLicencia {
@@ -99,6 +105,12 @@ model Empleado {
   turno           Turno
   salaId          String?        @map("sala_id")
   fotoUrl         String?        @map("foto_url")
+  /// PIN de fichaje, hash bcrypt. Son cuatro dígitos, así que el espacio de
+  /// búsqueda es chico: se guarda hasheado igual, porque el costo de bcrypt
+  /// es lo que hace impracticable probarlos todos contra la base si alguien
+  /// llegara a leerla. Lo asigna la dirección; null = todavía sin asignar, y
+  /// sin PIN no se puede fichar.
+  pinFichaje      String?        @map("pin_fichaje")
   /// Valor hora en pesos. La liquidación lo congela al generarse.
   valorHora       Decimal        @default(0) @map("valor_hora") @db.Decimal(10, 2)
   estado          EstadoEmpleado @default(ACTIVO)
@@ -283,6 +295,11 @@ model Configuracion {
   /// Días laborales, 0 = domingo … 6 = sábado.
   diasLaborales         Int[]    @default([1, 2, 3, 4, 5]) @map("dias_laborales")
   zonaHoraria           String   @default("America/Argentina/Buenos_Aires") @map("zona_horaria")
+  /// Token del QR de fichaje vigente. Vive acá y no en su propia tabla porque
+  /// hay uno solo por vez: al regenerarlo, el anterior deja de valer en el
+  /// acto. La fecha es la que lo vence — sirve solo el día en que se generó.
+  tokenFichaje          String?  @map("token_fichaje")
+  tokenGeneradoEn       DateTime? @map("token_generado_en")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@map("configuracion")

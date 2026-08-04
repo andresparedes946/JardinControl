@@ -222,6 +222,37 @@ export const fichajeSchema = z.object({
 
 export type DatosFichaje = z.infer<typeof fichajeSchema>;
 
+// ─────────────────────────── Fichaje por QR ───────────────────────────
+
+/** Cuatro dígitos: se teclea de pie, con una mano y a veces con guantes. */
+export const PIN_LARGO = 4;
+
+export const pinSchema = z
+  .string()
+  .trim()
+  .regex(new RegExp(`^\\d{${PIN_LARGO}}$`), `El PIN son ${PIN_LARGO} dígitos`);
+
+/**
+ * Lo que manda la empleada desde la página del QR.
+ *
+ * El token viaja en la URL y se valida aparte. Acá van la identidad —DNI más
+ * PIN— y la ubicación, que el servidor vuelve a medir contra la geocerca.
+ */
+export const fichajeQrSchema = z.object({
+  dni: z
+    .string()
+    .trim()
+    .regex(/^\d{7,9}$/, "El DNI son 7 a 9 dígitos, sin puntos"),
+  pin: pinSchema,
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  // Sin tope superior a propósito: una precisión malísima es un dato válido
+  // que el servidor tiene que ver para poder rechazarla y dejarla registrada.
+  precisionMetros: z.number().min(0),
+});
+
+export type DatosFichajeQr = z.infer<typeof fichajeQrSchema>;
+
 // ─────────────────────────── Licencias ───────────────────────────
 
 export const TIPOS_LICENCIA = [

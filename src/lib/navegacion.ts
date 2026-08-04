@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   FileText,
   LayoutDashboard,
+  QrCode,
   ScanFace,
   ScrollText,
   Settings,
@@ -27,6 +28,7 @@ export type ItemNavegacion = {
 export const NAVEGACION: Record<Rol, ItemNavegacion[]> = {
   ADMIN: [
     { href: "/dashboard", etiqueta: "Dashboard", icono: LayoutDashboard },
+    { href: "/codigo", etiqueta: "Código de fichaje", icono: QrCode },
     { href: "/empleados", etiqueta: "Empleados", icono: Users },
     { href: "/asistencias", etiqueta: "Asistencias", icono: CalendarCheck },
     { href: "/licencias", etiqueta: "Licencias", icono: FileText },

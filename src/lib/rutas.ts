@@ -7,6 +7,7 @@
 /** Secciones reservadas al rol ADMIN. */
 export const RUTAS_ADMIN = [
   "/dashboard",
+  "/codigo",
   "/empleados",
   "/asistencias",
   "/licencias",
